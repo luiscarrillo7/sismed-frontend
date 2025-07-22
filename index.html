@@ -21,78 +21,45 @@
             white-space: pre-wrap; /* Wrap long lines */
             word-wrap: break-word; /* Break words if necessary */
         }
-        /* Estilos para mensajes de éxito/error (mantener por si acaso) */
-        .message-success {
-            color: #10b981; /* Green */
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-        .message-error {
-            color: #ef4444; /* Red */
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-        .message-detail {
-            font-size: 0.9rem;
-            color: #4b5563; /* Gray */
-            margin-bottom: 0.25rem;
-        }
-        .message-detail strong {
-            color: #1f2937; /* Darker gray for labels */
-        }
-        .message-container {
-            background-color: #e0e7ff; /* Light blue background for results */
-            padding: 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid #93c5fd; /* Blue border */
-            margin-top: 1rem;
-        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
         <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Consulta de Datos de Google Sheets</h1>
 
-        <!-- Sección para la consulta general de hojas (ID 1 o 2) -->
-        <div class="mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Ver Hoja Completa</h2>
-            <div class="mb-6 flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                <label for="sheetId" class="text-lg font-medium text-gray-700">Selecciona ID de Hoja:</label>
-                <select id="sheetId" class="mt-1 block w-full sm:w-auto p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
-                    <option value="1">Hoja de Cálculo ID 1 (Códigos a Nombres)</option>
-                    <option value="2">Hoja de Cálculo ID 2 (Datos Originales)</option>
-                </select>
-                <button id="fetchDataBtn" class="mt-4 sm:mt-0 px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
-                    Obtener Datos
-                </button>
-            </div>
-
-            <div id="loadingIndicator" class="text-center text-blue-600 text-lg font-medium hidden mb-4">
-                Cargando datos...
-            </div>
-
-            <div id="results" class="mt-8">
-                <h3 class="text-xl font-semibold text-gray-800 mb-4">Resultados de la Hoja:</h3>
-                <pre id="dataDisplay" class="min-h-[150px]"></pre>
-            </div>
+        <div class="mb-6 flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <label for="sheetId" class="text-lg font-medium text-gray-700">Selecciona ID de Hoja:</label>
+            <select id="sheetId" class="mt-1 block w-full sm:w-auto p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
+                <option value="1">Hoja de Cálculo ID 1</option>
+                <option value="2">Hoja de Cálculo ID 2</option>
+            </select>
+            <button id="fetchDataBtn" class="mt-4 sm:mt-0 px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
+                Obtener Datos
+            </button>
         </div>
 
-        <!-- La sección de búsqueda de medicamentos se ha eliminado según tu solicitud -->
+        <div id="loadingIndicator" class="text-center text-blue-600 text-lg font-medium hidden mb-4">
+            Cargando datos...
+        </div>
 
+        <div id="results" class="mt-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Resultados:</h2>
+            <pre id="dataDisplay" class="min-h-[150px]"></pre>
+        </div>
     </div>
 
     <script>
-        // --- Elementos para la consulta general de hojas (ID 1 o 2) ---
+        // Get references to HTML elements
         const sheetIdSelect = document.getElementById('sheetId');
         const fetchDataBtn = document.getElementById('fetchDataBtn');
         const dataDisplay = document.getElementById('dataDisplay');
         const loadingIndicator = document.getElementById('loadingIndicator');
 
-        // URL base de tu backend ASP.NET Minimal API
-        // ¡IMPORTANTE: Reemplaza esta URL con la URL de tu API desplegada en SmarterASP.net!
-        const API_BASE_URL = 'http://luiscarrillo7-001-site1.jtempurl.com'; 
+        // Base URL for your API
+        // IMPORTANT: Replace this with your actual deployed API URL
+        const API_BASE_URL = 'https://api-consulta-sismed.googlesites.cloud';
 
-        // --- Lógica para la consulta general de hojas (ID 1 o 2) ---
+        // Function to fetch data from the API
         async function fetchData() {
             const selectedId = sheetIdSelect.value;
             const apiUrl = `${API_BASE_URL}/leer-sheet?id=${selectedId}`;
@@ -104,19 +71,15 @@
                 const response = await fetch(apiUrl);
 
                 if (!response.ok) {
-                    const errorData = await response.json();
+                    // If the response is not OK (e.g., 404, 500), throw an error
+                    const errorData = await response.json(); // Try to parse error message
                     throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
                 }
 
-                const data = await response.json();
-                
-                // --- MODIFICACIÓN CLAVE AQUÍ ---
-                // Simplemente muestra el JSON completo que viene del backend.
-                // El backend ya se encarga de reemplazar los códigos por nombres si id === '1'.
-                dataDisplay.textContent = JSON.stringify(data, null, 2); 
-                // --- FIN DE LA MODIFICACIÓN ---
-
+                const data = await response.json(); // Parse the JSON response
+                dataDisplay.textContent = JSON.stringify(data, null, 2); // Display formatted JSON
             } catch (error) {
+                // Handle any errors during the fetch operation
                 dataDisplay.textContent = `Error al obtener los datos: \n${error.message}`;
                 dataDisplay.style.color = '#ef4444'; // Red color for errors
                 console.error('Error fetching data:', error);
@@ -125,7 +88,11 @@
             }
         }
 
+        // Add event listener to the button
         fetchDataBtn.addEventListener('click', fetchData);
+
+        // Optional: Fetch data automatically on page load for the default selected ID
+        // fetchData();
     </script>
 </body>
 </html>
