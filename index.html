@@ -25,11 +25,15 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 1rem;
+            /* Intentar forzar el ajuste de la tabla al 100% de su contenedor */
+            table-layout: fixed; /* Esto ayuda a que las columnas se distribuyan */
         }
         th, td {
-            padding: 0.75rem;
+            padding: 0.5rem 0.75rem; /* Reducido el padding vertical para más espacio */
             text-align: left;
             border-bottom: 1px solid #e2e8f0; /* light-gray border */
+            word-wrap: break-word; /* Asegura que el texto largo se envuelva */
+            overflow-wrap: break-word; /* Otra propiedad para asegurar el ajuste de palabras */
         }
         th {
             background-color: #f8fafc; /* Lighter background for headers */
@@ -39,10 +43,19 @@
         tr:hover {
             background-color: #f1f5f9; /* Even lighter hover effect */
         }
+
+        /* Estilos para el texto en las celdas de la tabla */
+        .table-text-sm {
+            font-size: 0.875rem; /* sm = 14px */
+        }
+        .table-text-xs {
+            font-size: 0.75rem; /* xs = 12px */
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-4xl"> <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Consulta de Datos de Google Sheets</h1>
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-6xl"> 
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Consulta de Datos de Google Sheets</h1>
 
         <div class="mb-6 flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             <label for="sheetId" class="text-lg font-medium text-gray-700">Selecciona ID de Hoja:</label>
@@ -69,45 +82,42 @@
     </div>
 
     <script>
-        // Get references to HTML elements
         const sheetIdSelect = document.getElementById('sheetId');
         const fetchDataBtn = document.getElementById('fetchDataBtn');
-        const tableContainer = document.getElementById('tableContainer'); // Nuevo contenedor para la tabla
-        const dataDisplay = document.getElementById('dataDisplay'); // Para JSON crudo y errores
-        const dataMessage = document.getElementById('dataMessage'); // Mensaje inicial
+        const tableContainer = document.getElementById('tableContainer');
+        const dataDisplay = document.getElementById('dataDisplay');
+        const dataMessage = document.getElementById('dataMessage');
         const loadingIndicator = document.getElementById('loadingIndicator');
 
-        // Base URL for your API
-        // IMPORTANT: Replace this with your actual deployed API URL
         const API_BASE_URL = 'https://api-consulta-sismed.googlesites.cloud';
 
-        // Function to fetch data from the API
         async function fetchData() {
             const selectedId = sheetIdSelect.value;
             const apiUrl = `${API_BASE_URL}/leer-sheet?id=${selectedId}`;
 
-            tableContainer.innerHTML = ''; // Clear previous table
-            dataDisplay.textContent = ''; // Clear previous JSON
-            dataDisplay.classList.add('hidden'); // Ocultar el pre por defecto
-            dataMessage.classList.add('hidden'); // Ocultar el mensaje inicial
-            loadingIndicator.classList.remove('hidden'); // Show loading indicator
+            tableContainer.innerHTML = '';
+            dataDisplay.textContent = '';
+            dataDisplay.classList.add('hidden');
+            dataMessage.classList.add('hidden');
+            loadingIndicator.classList.remove('hidden');
 
             try {
                 const response = await fetch(apiUrl);
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.detail || `HTTP error! status: ${response.status} - ${errorData.message}`); // Usar errorData.message si está disponible
+                    throw new Error(errorData.detail || `HTTP error! status: ${response.status} - ${errorData.message}`);
                 }
 
-                const data = await response.json(); // Parse the JSON response
+                const data = await response.json();
 
                 if (data.valores && data.valores.length > 0) {
-                    const headers = data.valores[0]; // First array in valores is headers
-                    const rows = data.valores.slice(1); // Rest are data rows
+                    const headers = data.valores[0];
+                    const rows = data.valores.slice(1);
 
                     const table = document.createElement('table');
-                    table.classList.add('min-w-full', 'bg-white', 'shadow-md', 'rounded-lg', 'overflow-hidden'); // Tailwind classes for table
+                    // Usamos la clase `table-auto` de Tailwind que junto con `table-layout: fixed` en CSS ayuda
+                    table.classList.add('min-w-full', 'bg-white', 'shadow-md', 'rounded-lg', 'overflow-hidden', 'table-auto');
 
                     // Create table header
                     const thead = document.createElement('thead');
@@ -115,7 +125,8 @@
                     headers.forEach(headerText => {
                         const th = document.createElement('th');
                         th.textContent = headerText;
-                        th.classList.add('py-3', 'px-4', 'border-b', 'border-gray-200', 'bg-gray-50', 'text-sm', 'font-semibold', 'text-gray-600', 'uppercase', 'tracking-wider'); // Tailwind classes for th
+                        // Ajustado el padding y el tamaño de fuente para los encabezados
+                        th.classList.add('py-2', 'px-3', 'border-b', 'border-gray-200', 'bg-gray-50', 'text-xs', 'font-semibold', 'text-gray-600', 'uppercase', 'tracking-wider');
                         headerRow.appendChild(th);
                     });
                     thead.appendChild(headerRow);
@@ -125,43 +136,38 @@
                     const tbody = document.createElement('tbody');
                     rows.forEach(rowData => {
                         const tr = document.createElement('tr');
-                        tr.classList.add('hover:bg-gray-50'); // Tailwind hover effect
+                        tr.classList.add('hover:bg-gray-50');
                         rowData.forEach(cellData => {
                             const td = document.createElement('td');
                             td.textContent = cellData;
-                            td.classList.add('py-3', 'px-4', 'border-b', 'border-gray-200', 'text-sm', 'text-gray-800', 'whitespace-nowrap'); // Tailwind classes for td
+                            // Ajustado el padding y el tamaño de fuente para las celdas
+                            // Se eliminó `whitespace-nowrap` para permitir el ajuste de texto
+                            td.classList.add('py-2', 'px-3', 'border-b', 'border-gray-200', 'text-xs', 'text-gray-800');
                             tr.appendChild(td);
                         });
                         tbody.appendChild(tr);
                     });
                     table.appendChild(tbody);
 
-                    tableContainer.appendChild(table); // Add the table to the container
-                    // Optional: Display the success message from the API
-                    // dataMessage.textContent = data.message;
-                    // dataMessage.classList.remove('hidden');
+                    tableContainer.appendChild(table);
 
                 } else {
                     dataDisplay.textContent = 'No se encontraron datos o la estructura no es la esperada.';
                     dataDisplay.classList.remove('hidden');
-                    dataDisplay.style.color = '#ef4444'; // Red color for errors
+                    dataDisplay.style.color = '#ef4444';
                 }
 
             } catch (error) {
                 dataDisplay.textContent = `Error al obtener los datos: \n${error.message}`;
                 dataDisplay.classList.remove('hidden');
-                dataDisplay.style.color = '#ef4444'; // Red color for errors
+                dataDisplay.style.color = '#ef4444';
                 console.error('Error fetching data:', error);
             } finally {
-                loadingIndicator.classList.add('hidden'); // Hide loading indicator
+                loadingIndicator.classList.add('hidden');
             }
         }
 
-        // Add event listener to the button
         fetchDataBtn.addEventListener('click', fetchData);
-
-        // Optional: Fetch data automatically on page load for the default selected ID
-        // fetchData(); // Descomenta si quieres que cargue al inicio
     </script>
 </body>
 </html>
