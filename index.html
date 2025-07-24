@@ -3,205 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualizador de Google Sheets</title>
+    <title>Consulta de Google Sheets</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-            color: #333;
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
         }
-        .container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            max-width: 1000px;
-            margin: 20px auto;
+        pre {
+            background-color: #1f2937; /* Darker background for code/JSON */
+            color: #e5e7eb; /* Light text color */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto; /* Allow horizontal scrolling for long lines */
+            white-space: pre-wrap; /* Wrap long lines */
+            word-wrap: break-word; /* Break words if necessary */
         }
-        h1 {
-            color: #0056b3;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .controls {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        label {
-            font-weight: bold;
-        }
-        select, button {
-            padding: 10px 15px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        select {
-            background-color: #f9f9f9;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            transition: background-color 0.3s ease;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        #message {
-            text-align: center;
-            margin-top: 15px;
-            font-weight: bold;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        #message.success {
-            background-color: #d4edda;
-            color: #155724;
-            border-color: #c3e6cb;
-        }
-        #message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border-color: #f5c6cb;
-        }
-        #message.loading {
-            background-color: #e2e3e5;
-            color: #383d41;
-            border-color: #d6d8db;
-        }
+        /* Estilos adicionales para la tabla si es necesario */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 1rem;
         }
         th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
+            padding: 0.75rem;
             text-align: left;
+            border-bottom: 1px solid #e2e8f0; /* light-gray border */
         }
         th {
-            background-color: #007bff;
-            color: white;
-            position: sticky;
-            top: 0; /* Para que los encabezados se queden pegados al hacer scroll */
-        }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
+            background-color: #f8fafc; /* Lighter background for headers */
+            font-weight: 600;
+            color: #475569; /* Slate 600 */
         }
         tr:hover {
-            background-color: #e9e9e9;
-        }
-        .table-container {
-            max-height: 600px; /* Altura máxima para el scroll */
-            overflow-y: auto; /* Habilita el scroll vertical */
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-top: 20px;
+            background-color: #f1f5f9; /* Even lighter hover effect */
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>Datos de Google Sheets</h1>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-4xl"> <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Consulta de Datos de Google Sheets</h1>
 
-        <div class="controls">
-            <label for="sheetSelector">Seleccionar Hoja:</label>
-            <select id="sheetSelector">
-                <option value="1">Hoja 1</option>
-                <option value="2">Hoja 2</option>
+        <div class="mb-6 flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <label for="sheetId" class="text-lg font-medium text-gray-700">Selecciona ID de Hoja:</label>
+            <select id="sheetId" class="mt-1 block w-full sm:w-auto p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
+                <option value="1">Hoja de Cálculo ID 1</option>
+                <option value="2">Hoja de Cálculo ID 2</option>
             </select>
-            <button id="loadDataButton">Cargar Datos</button>
+            <button id="fetchDataBtn" class="mt-4 sm:mt-0 px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
+                Obtener Datos
+            </button>
         </div>
 
-        <div id="message" class="loading" style="display: none;"></div>
+        <div id="loadingIndicator" class="text-center text-blue-600 text-lg font-medium hidden mb-4">
+            Cargando datos...
+        </div>
 
-        <div class="table-container">
-            <table id="dataTable">
-                <thead>
-                    <tr>
-                        </tr>
-                </thead>
-                <tbody>
-                    </tbody>
-            </table>
+        <div id="results" class="mt-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Resultados:</h2>
+            <div id="tableContainer" class="overflow-x-auto">
+                <p id="dataMessage" class="text-gray-600">Selecciona una hoja y haz clic en "Obtener Datos".</p>
+            </div>
+            <pre id="dataDisplay" class="min-h-[150px] hidden mt-4"></pre>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const sheetSelector = document.getElementById('sheetSelector');
-            const loadDataButton = document.getElementById('loadDataButton');
-            const dataTable = document.getElementById('dataTable');
-            const tableHead = dataTable.querySelector('thead tr');
-            const tableBody = dataTable.querySelector('tbody');
-            const messageDiv = document.getElementById('message');
+        // Get references to HTML elements
+        const sheetIdSelect = document.getElementById('sheetId');
+        const fetchDataBtn = document.getElementById('fetchDataBtn');
+        const tableContainer = document.getElementById('tableContainer'); // Nuevo contenedor para la tabla
+        const dataDisplay = document.getElementById('dataDisplay'); // Para JSON crudo y errores
+        const dataMessage = document.getElementById('dataMessage'); // Mensaje inicial
+        const loadingIndicator = document.getElementById('loadingIndicator');
 
-            const API_BASE_URL = 'https://api-consulta-sismed.googlesites.cloud/'; // Reemplaza con la URL de tu API desplegada
+        // Base URL for your API
+        // IMPORTANT: Replace this with your actual deployed API URL
+        const API_BASE_URL = 'https://api-consulta-sismed.googlesites.cloud';
 
-            async function fetchData(sheetId) {
-                messageDiv.style.display = 'block';
-                messageDiv.className = 'loading';
-                messageDiv.textContent = 'Cargando datos... Por favor espera.';
-                tableBody.innerHTML = ''; // Limpiar la tabla
-                tableHead.innerHTML = ''; // Limpiar encabezados
+        // Function to fetch data from the API
+        async function fetchData() {
+            const selectedId = sheetIdSelect.value;
+            const apiUrl = `${API_BASE_URL}/leer-sheet?id=${selectedId}`;
 
-                try {
-                    const response = await fetch(`${API_BASE_URL}/leer-sheet?id=${sheetId}`);
-                    const data = await response.json();
+            tableContainer.innerHTML = ''; // Clear previous table
+            dataDisplay.textContent = ''; // Clear previous JSON
+            dataDisplay.classList.add('hidden'); // Ocultar el pre por defecto
+            dataMessage.classList.add('hidden'); // Ocultar el mensaje inicial
+            loadingIndicator.classList.remove('hidden'); // Show loading indicator
 
-                    if (!response.ok) {
-                        throw new Error(data.message || 'Error al cargar los datos.');
-                    }
+            try {
+                const response = await fetch(apiUrl);
 
-                    messageDiv.className = 'success';
-                    messageDiv.textContent = data.message;
-
-                    if (data.valores && data.valores.length > 0) {
-                        // Crear encabezados de la tabla
-                        const headers = data.valores[0];
-                        headers.forEach(headerText => {
-                            const th = document.createElement('th');
-                            th.textContent = headerText;
-                            tableHead.appendChild(th);
-                        });
-
-                        // Llenar la tabla con los datos
-                        for (let i = 1; i < data.valores.length; i++) {
-                            const rowData = data.valores[i];
-                            const tr = document.createElement('tr');
-                            rowData.forEach(cellData => {
-                                const td = document.createElement('td');
-                                td.textContent = cellData;
-                                tr.appendChild(td);
-                            });
-                            tableBody.appendChild(tr);
-                        }
-                    } else {
-                        tableBody.innerHTML = '<tr><td colspan="4">No se encontraron datos.</td></tr>';
-                    }
-
-                } catch (error) {
-                    messageDiv.className = 'error';
-                    messageDiv.textContent = `Error: ${error.message}`;
-                    console.error('Error al obtener los datos:', error);
-                    tableBody.innerHTML = '<tr><td colspan="4">Error al cargar los datos. Por favor, intenta de nuevo más tarde.</td></tr>';
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP error! status: ${response.status} - ${errorData.message}`); // Usar errorData.message si está disponible
                 }
+
+                const data = await response.json(); // Parse the JSON response
+
+                if (data.valores && data.valores.length > 0) {
+                    const headers = data.valores[0]; // First array in valores is headers
+                    const rows = data.valores.slice(1); // Rest are data rows
+
+                    const table = document.createElement('table');
+                    table.classList.add('min-w-full', 'bg-white', 'shadow-md', 'rounded-lg', 'overflow-hidden'); // Tailwind classes for table
+
+                    // Create table header
+                    const thead = document.createElement('thead');
+                    const headerRow = document.createElement('tr');
+                    headers.forEach(headerText => {
+                        const th = document.createElement('th');
+                        th.textContent = headerText;
+                        th.classList.add('py-3', 'px-4', 'border-b', 'border-gray-200', 'bg-gray-50', 'text-sm', 'font-semibold', 'text-gray-600', 'uppercase', 'tracking-wider'); // Tailwind classes for th
+                        headerRow.appendChild(th);
+                    });
+                    thead.appendChild(headerRow);
+                    table.appendChild(thead);
+
+                    // Create table body
+                    const tbody = document.createElement('tbody');
+                    rows.forEach(rowData => {
+                        const tr = document.createElement('tr');
+                        tr.classList.add('hover:bg-gray-50'); // Tailwind hover effect
+                        rowData.forEach(cellData => {
+                            const td = document.createElement('td');
+                            td.textContent = cellData;
+                            td.classList.add('py-3', 'px-4', 'border-b', 'border-gray-200', 'text-sm', 'text-gray-800', 'whitespace-nowrap'); // Tailwind classes for td
+                            tr.appendChild(td);
+                        });
+                        tbody.appendChild(tr);
+                    });
+                    table.appendChild(tbody);
+
+                    tableContainer.appendChild(table); // Add the table to the container
+                    // Optional: Display the success message from the API
+                    // dataMessage.textContent = data.message;
+                    // dataMessage.classList.remove('hidden');
+
+                } else {
+                    dataDisplay.textContent = 'No se encontraron datos o la estructura no es la esperada.';
+                    dataDisplay.classList.remove('hidden');
+                    dataDisplay.style.color = '#ef4444'; // Red color for errors
+                }
+
+            } catch (error) {
+                dataDisplay.textContent = `Error al obtener los datos: \n${error.message}`;
+                dataDisplay.classList.remove('hidden');
+                dataDisplay.style.color = '#ef4444'; // Red color for errors
+                console.error('Error fetching data:', error);
+            } finally {
+                loadingIndicator.classList.add('hidden'); // Hide loading indicator
             }
+        }
 
-            // Cargar datos inicialmente para la Hoja 1 al cargar la página
-            fetchData(sheetSelector.value);
+        // Add event listener to the button
+        fetchDataBtn.addEventListener('click', fetchData);
 
-            // Manejar el clic del botón para cargar datos
-            loadDataButton.addEventListener('click', () => {
-                fetchData(sheetSelector.value);
-            });
-        });
+        // Optional: Fetch data automatically on page load for the default selected ID
+        // fetchData(); // Descomenta si quieres que cargue al inicio
     </script>
 </body>
 </html>
