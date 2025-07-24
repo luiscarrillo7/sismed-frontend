@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -95,4 +95,216 @@
         // fetchData();
     </script>
 </body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Inventario de Medicamentos</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .table-container {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        /* Estilos para la barra de desplazamiento */
+        .table-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-6xl">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Inventario de Medicamentos</h1>
+
+        <div class="mb-6 flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <label for="sheetId" class="text-lg font-medium text-gray-700">Seleccione ubicación:</label>
+            <select id="sheetId" class="mt-1 block w-full sm:w-auto p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
+                <option value="1">Farmacia Principal</option>
+                <option value="2">Farmacia Secundaria</option>
+            </select>
+            <button id="fetchDataBtn" class="mt-4 sm:mt-0 px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
+                Consultar Inventario
+            </button>
+        </div>
+
+        <div id="loadingIndicator" class="text-center text-blue-600 text-lg font-medium hidden mb-4">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600 mb-2"></div>
+            <p>Cargando datos del inventario...</p>
+        </div>
+
+        <div id="results" class="mt-8">
+            <div id="statusMessage" class="text-center text-lg font-medium mb-4 hidden"></div>
+            
+            <div id="tableContainer" class="table-container hidden">
+                <div class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                    <table id="inventoryTable" class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicamento</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Última Actualización</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Disponible</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Los datos se insertarán aquí dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="summaryInfo" class="mt-4 text-sm text-gray-600 hidden">
+                    <p>Total de medicamentos: <span id="totalItems" class="font-medium">0</span></p>
+                    <p>Última actualización: <span id="lastUpdate" class="font-medium">-</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elementos del DOM
+        const sheetIdSelect = document.getElementById('sheetId');
+        const fetchDataBtn = document.getElementById('fetchDataBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const statusMessage = document.getElementById('statusMessage');
+        const tableContainer = document.getElementById('tableContainer');
+        const tableBody = document.getElementById('tableBody');
+        const summaryInfo = document.getElementById('summaryInfo');
+        const totalItemsSpan = document.getElementById('totalItems');
+        const lastUpdateSpan = document.getElementById('lastUpdate');
+
+        // URL de tu API - IMPORTANTE: Reemplazar con tu URL real
+        const API_BASE_URL = 'https://api-consulta-sismed.googlesites.cloud';
+
+        // Función para formatear fechas
+        function formatDate(dateString) {
+            if (!dateString || dateString === 'N/A') return 'No disponible';
+            
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('es-ES', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        // Función para obtener los datos
+        async function fetchData() {
+            const selectedId = sheetIdSelect.value;
+            const apiUrl = `${API_BASE_URL}/leer-sheet?id=${selectedId}`;
+
+            // Resetear la UI
+            tableContainer.classList.add('hidden');
+            summaryInfo.classList.add('hidden');
+            statusMessage.classList.add('hidden');
+            tableBody.innerHTML = '';
+            loadingIndicator.classList.remove('hidden');
+
+            try {
+                const response = await fetch(apiUrl);
+
+                if (!response.ok) {
+                    throw new Error(`Error HTTP! Estado: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (!data.valores || data.valores.length <= 1) {
+                    throw new Error('No se encontraron datos en el inventario');
+                }
+
+                // Obtener los encabezados (primera fila)
+                const headers = data.valores[0];
+                
+                // Procesar los datos (omitir la primera fila que son los encabezados)
+                const items = data.valores.slice(1);
+                
+                // Generar filas de la tabla
+                items.forEach(item => {
+                    const row = document.createElement('tr');
+                    
+                    // Orden de las columnas: MEDICAMENTO_NOMBRE, DATO_C, STKFECHULT, STKSALDO
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">${item[0] || 'N/A'}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-500">${item[1] || 'N/A'}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-500">${formatDate(item[2])}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                ${item[3] > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${item[3] || 0}
+                            </span>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                // Actualizar información de resumen
+                totalItemsSpan.textContent = items.length;
+                
+                // Buscar la fecha más reciente
+                const latestDate = items.reduce((latest, item) => {
+                    try {
+                        const currentDate = new Date(item[2]);
+                        return currentDate > latest ? currentDate : latest;
+                    } catch {
+                        return latest;
+                    }
+                }, new Date(0)); // Fecha mínima
+                
+                lastUpdateSpan.textContent = latestDate.getTime() > 0 ? 
+                    formatDate(latestDate) : 'No disponible';
+
+                // Mostrar resultados
+                tableContainer.classList.remove('hidden');
+                summaryInfo.classList.remove('hidden');
+                statusMessage.classList.add('hidden');
+                
+            } catch (error) {
+                statusMessage.textContent = `❌ Error: ${error.message}`;
+                statusMessage.classList.remove('hidden');
+                statusMessage.className = 'text-center text-lg font-medium mb-4 text-red-600';
+                console.error('Error al obtener datos:', error);
+            } finally {
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+
+        // Evento del botón
+        fetchDataBtn.addEventListener('click', fetchData);
+
+        // Opcional: Cargar datos automáticamente al inicio
+        // window.addEventListener('DOMContentLoaded', fetchData);
+    </script>
+</body>
 </html>
+
