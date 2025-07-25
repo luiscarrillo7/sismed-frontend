@@ -9,47 +9,43 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Light gray background */
+            background-color: #f3f4f6;
         }
         pre {
-            background-color: #1f2937; /* Darker background for code/JSON */
-            color: #e5e7eb; /* Light text color */
+            background-color: #1f2937;
+            color: #e5e7eb;
             padding: 1rem;
             border-radius: 0.5rem;
-            overflow-x: auto; /* Allow horizontal scrolling for long lines */
-            white-space: pre-wrap; /* Wrap long lines */
-            word-wrap: break-word; /* Break words if necessary */
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
-        /* Estilos adicionales para la tabla si es necesario */
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 1rem;
-            /* Intentar forzar el ajuste de la tabla al 100% de su contenedor */
-            table-layout: fixed; /* Esto ayuda a que las columnas se distribuyan */
+            table-layout: fixed;
         }
         th, td {
-            padding: 0.5rem 0.75rem; /* Reducido el padding vertical para más espacio */
+            padding: 0.5rem 0.75rem;
             text-align: left;
-            border-bottom: 1px solid #e2e8f0; /* light-gray border */
-            word-wrap: break-word; /* Asegura que el texto largo se envuelva */
-            overflow-wrap: break-word; /* Otra propiedad para asegurar el ajuste de palabras */
+            border-bottom: 1px solid #e2e8f0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         th {
-            background-color: #f8fafc; /* Lighter background for headers */
+            background-color: #f8fafc;
             font-weight: 600;
-            color: #475569; /* Slate 600 */
+            color: #475569;
         }
         tr:hover {
-            background-color: #f1f5f9; /* Even lighter hover effect */
+            background-color: #f1f5f9;
         }
-
-        /* Estilos para el texto en las celdas de la tabla */
         .table-text-sm {
-            font-size: 0.875rem; /* sm = 14px */
+            font-size: 0.875rem;
         }
         .table-text-xs {
-            font-size: 0.75rem; /* xs = 12px */
+            font-size: 0.75rem;
         }
     </style>
 </head>
@@ -58,10 +54,11 @@
         <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Consulta de Datos de Google Sheets</h1>
 
         <div class="mb-6 flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <label for="sheetId" class="text-lg font-medium text-gray-700">Selecciona ID de Hoja:</label>
+            <label for="sheetId" class="text-lg font-medium text-gray-700">Selecciona Hoja:</label>
             <select id="sheetId" class="mt-1 block w-full sm:w-auto p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
                 <option value="1">Hoja de Cálculo ID 1</option>
                 <option value="2">Hoja de Cálculo ID 2</option>
+                <option value="farma">FARMAMINSA ATE</option>
             </select>
             <button id="fetchDataBtn" class="mt-4 sm:mt-0 px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
                 Obtener Datos
@@ -116,7 +113,6 @@
                     const rows = data.valores.slice(1);
 
                     const table = document.createElement('table');
-                    // Usamos la clase `table-auto` de Tailwind que junto con `table-layout: fixed` en CSS ayuda
                     table.classList.add('min-w-full', 'bg-white', 'shadow-md', 'rounded-lg', 'overflow-hidden', 'table-auto');
 
                     // Create table header
@@ -125,7 +121,6 @@
                     headers.forEach(headerText => {
                         const th = document.createElement('th');
                         th.textContent = headerText;
-                        // Ajustado el padding y el tamaño de fuente para los encabezados
                         th.classList.add('py-2', 'px-3', 'border-b', 'border-gray-200', 'bg-gray-50', 'text-xs', 'font-semibold', 'text-gray-600', 'uppercase', 'tracking-wider');
                         headerRow.appendChild(th);
                     });
@@ -140,8 +135,6 @@
                         rowData.forEach(cellData => {
                             const td = document.createElement('td');
                             td.textContent = cellData;
-                            // Ajustado el padding y el tamaño de fuente para las celdas
-                            // Se eliminó `whitespace-nowrap` para permitir el ajuste de texto
                             td.classList.add('py-2', 'px-3', 'border-b', 'border-gray-200', 'text-xs', 'text-gray-800');
                             tr.appendChild(td);
                         });
