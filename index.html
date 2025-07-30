@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Consulta Integrado</title>
+    <title>Sistema de Consulta Funcional</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -11,236 +11,290 @@
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
         }
-        pre {
-            background-color: #1f2937;
-            color: #e5e7eb;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-            table-layout: fixed;
-        }
         th, td {
-            padding: 0.5rem 0.75rem;
+            padding: 0.75rem;
             text-align: left;
             border-bottom: 1px solid #e2e8f0;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
         }
         th {
             background-color: #f8fafc;
             font-weight: 600;
             color: #475569;
+            cursor: pointer;
         }
-        tr:hover {
-            background-color: #f1f5f9;
+        .sort-icon {
+            margin-left: 5px;
         }
-        .table-text-sm {
-            font-size: 0.875rem;
-        }
-        .table-text-xs {
-            font-size: 0.75rem;
-        }
-        .form-row {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        .form-group {
-            flex: 1;
-            min-width: 250px;
+        .stock-zero {
+            color: #ef4444;
+            font-weight: 500;
         }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-6xl"> 
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Sistema de Consulta Integrado</h1>
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Sistema de Consulta de Medicamentos</h1>
 
-        <!-- Sección de selección de establecimiento -->
+        <!-- Sección de selección -->
         <div class="mb-8 p-6 bg-gray-50 rounded-lg">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Selección de Establecimiento</h2>
-            
-            <div class="form-row">
-                <div class="form-group">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
                     <label for="oficina" class="block text-sm font-medium text-gray-700 mb-1">Tipo de Establecimiento</label>
-                    <select id="oficina" onchange="cargarServicios()" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
+                    <select id="oficina" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Seleccione un tipo</option>
                         <option value="DIRIS">ESTABLECIMIENTOS DE SALUD</option>
                         <option value="CS">FARMAMINSA</option>
                     </select>
                 </div>
-
-                <div class="form-group">
+                <div>
                     <label for="inputServicio" class="block text-sm font-medium text-gray-700 mb-1">Establecimiento</label>
-                    <input type="text" id="inputServicio" placeholder="Escriba para buscar..." list="listaServicios" autocomplete="off" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
+                    <input type="text" id="inputServicio" placeholder="Escriba para buscar..." list="listaServicios" autocomplete="off" 
+                           class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                     <datalist id="listaServicios"></datalist>
                 </div>
             </div>
+            <button id="fetchDataBtn" class="w-full md:w-auto px-6 py-3 bg-blue-600 text-white font-medium rounded-md shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                Consultar Datos
+            </button>
         </div>
 
-        <!-- Sección de consulta de datos -->
-        <div class="mb-6 p-6 bg-gray-50 rounded-lg">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Consulta de Datos</h2>
-            
-            <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                <button id="fetchDataBtn" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
-                    Consultar Datos
+        <!-- Filtros -->
+        <div id="filtersContainer" class="hidden mb-6 p-4 bg-blue-50 rounded-lg">
+            <h3 class="text-lg font-medium text-gray-700 mb-3">Filtrar por Stock</h3>
+            <div class="flex flex-wrap gap-3">
+                <button onclick="sortData('stock','asc')" class="px-4 py-2 bg-white border border-blue-500 text-blue-500 rounded-md hover:bg-blue-50">
+                    Menor a Mayor
+                </button>
+                <button onclick="sortData('stock','desc')" class="px-4 py-2 bg-white border border-blue-500 text-blue-500 rounded-md hover:bg-blue-50">
+                    Mayor a Menor
+                </button>
+                <button onclick="filterData('stock',0)" class="px-4 py-2 bg-white border border-red-500 text-red-500 rounded-md hover:bg-red-50">
+                    Solo Stock Cero
+                </button>
+                <button onclick="resetData()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+                    Mostrar Todos
                 </button>
             </div>
         </div>
 
-        <!-- Indicador de carga -->
-        <div id="loadingIndicator" class="text-center text-blue-600 text-lg font-medium hidden mb-4">
-            Cargando datos...
-        </div>
-
         <!-- Resultados -->
-        <div id="results" class="mt-8">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Resultados:</h2>
-            <div id="tableContainer" class="overflow-x-auto">
-                <p id="dataMessage" class="text-gray-600">Seleccione un establecimiento y haga clic en "Consultar Datos".</p>
+        <div id="results">
+            <div id="loadingIndicator" class="text-center py-8 hidden">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+                <p class="mt-3 text-blue-600">Cargando datos...</p>
             </div>
-            <pre id="dataDisplay" class="min-h-[150px] hidden mt-4"></pre>
+            
+            <div id="tableContainer" class="overflow-x-auto bg-white rounded-lg shadow">
+                <p id="dataMessage" class="text-gray-600 p-4">Seleccione un establecimiento y haga clic en "Consultar Datos".</p>
+                <!-- La tabla se insertará aquí -->
+            </div>
         </div>
     </div>
 
     <script>
-        // Datos de establecimientos
+        // Datos y configuración
         const servicios = {
             DIRIS: ["C.S CATALINA HUANCA", "C.S.M.C DAVID TEJADA"],
             CS: ["FARMAMINSA-EL AGUSTINO", "FARMAMINSA-ATE", "FARMAMINSA-CHOSICA"]
         };
 
-        // Mapeo de establecimientos a IDs de hojas
         const establecimientoIds = {
             "FARMAMINSA-EL AGUSTINO": "1",
-            "FARMAMINSA-CHOSICA": "2",
+            "FARMAMINSA-CHOSICA": "2", 
             "FARMAMINSA-ATE": "farma"
         };
 
-        // Elementos del DOM
-        const tableContainer = document.getElementById('tableContainer');
-        const dataDisplay = document.getElementById('dataDisplay');
-        const dataMessage = document.getElementById('dataMessage');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const fetchDataBtn = document.getElementById('fetchDataBtn');
-
         const API_BASE_URL = 'https://api-consulta-sismed.googlesites.cloud';
+        
+        // Variables de estado
+        let rawData = [];
+        let currentData = [];
+        let headers = [];
 
-        // Cargar servicios según tipo de establecimiento seleccionado
+        // Elementos del DOM
+        const elements = {
+            oficina: document.getElementById('oficina'),
+            inputServicio: document.getElementById('inputServicio'),
+            listaServicios: document.getElementById('listaServicios'),
+            fetchDataBtn: document.getElementById('fetchDataBtn'),
+            filtersContainer: document.getElementById('filtersContainer'),
+            loadingIndicator: document.getElementById('loadingIndicator'),
+            tableContainer: document.getElementById('tableContainer'),
+            dataMessage: document.getElementById('dataMessage')
+        };
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            // Cargar opciones de establecimientos
+            elements.oficina.addEventListener('change', cargarServicios);
+            
+            // Configurar botón de consulta
+            elements.fetchDataBtn.addEventListener('click', fetchData);
+        });
+
+        // Cargar servicios según tipo seleccionado
         function cargarServicios() {
-            const oficina = document.getElementById("oficina").value;
-            const inputServicio = document.getElementById("inputServicio");
-            const datalist = document.getElementById("listaServicios");
+            const tipo = elements.oficina.value;
+            elements.inputServicio.value = "";
+            elements.listaServicios.innerHTML = "";
 
-            inputServicio.value = "";
-            datalist.innerHTML = "";
-
-            if (servicios[oficina]) {
-                servicios[oficina].forEach(area => {
+            if (servicios[tipo]) {
+                servicios[tipo].forEach(establecimiento => {
                     const option = document.createElement("option");
-                    option.value = area;
-                    datalist.appendChild(option);
+                    option.value = establecimiento;
+                    elements.listaServicios.appendChild(option);
                 });
             }
         }
 
-        // Consultar datos de la API
+        // Consultar datos a la API
         async function fetchData() {
-            const establecimiento = document.getElementById('inputServicio').value;
+            const establecimiento = elements.inputServicio.value.trim();
             
-            // Validar selección
             if (!establecimiento) {
-                alert("¡Por favor seleccione un establecimiento válido!");
+                alert("Por favor seleccione un establecimiento válido");
                 return;
             }
             
-            // Obtener ID de la hoja
-            const selectedId = establecimientoIds[establecimiento];
-            if (!selectedId) {
-                alert("No se encontró el ID de hoja para este establecimiento");
+            const sheetId = establecimientoIds[establecimiento];
+            if (!sheetId) {
+                alert("No se encontró configuración para este establecimiento");
                 return;
             }
 
-            const apiUrl = `${API_BASE_URL}/leer-sheet?id=${selectedId}`;
-
-            tableContainer.innerHTML = '';
-            dataDisplay.textContent = '';
-            dataDisplay.classList.add('hidden');
-            dataMessage.classList.add('hidden');
-            loadingIndicator.classList.remove('hidden');
+            // Mostrar carga
+            elements.loadingIndicator.classList.remove('hidden');
+            elements.tableContainer.innerHTML = '';
+            elements.dataMessage.classList.add('hidden');
+            elements.filtersContainer.classList.add('hidden');
 
             try {
-                const response = await fetch(apiUrl);
-
+                const response = await fetch(`${API_BASE_URL}/leer-sheet?id=${sheetId}`);
+                
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || `HTTP error! status: ${response.status} - ${errorData.message}`);
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
                 }
-
+                
                 const data = await response.json();
-
-                if (data.valores && data.valores.length > 0) {
-                    const headers = data.valores[0];
-                    const rows = data.valores.slice(1);
-
-                    const table = document.createElement('table');
-                    table.classList.add('min-w-full', 'bg-white', 'shadow-md', 'rounded-lg', 'overflow-hidden', 'table-auto');
-
-                    // Crear encabezado de tabla
-                    const thead = document.createElement('thead');
-                    const headerRow = document.createElement('tr');
-                    headers.forEach(headerText => {
-                        const th = document.createElement('th');
-                        th.textContent = headerText;
-                        th.classList.add('py-2', 'px-3', 'border-b', 'border-gray-200', 'bg-gray-50', 'text-xs', 'font-semibold', 'text-gray-600', 'uppercase', 'tracking-wider');
-                        headerRow.appendChild(th);
-                    });
-                    thead.appendChild(headerRow);
-                    table.appendChild(thead);
-
-                    // Crear cuerpo de tabla
-                    const tbody = document.createElement('tbody');
-                    rows.forEach(rowData => {
-                        const tr = document.createElement('tr');
-                        tr.classList.add('hover:bg-gray-50');
-                        rowData.forEach(cellData => {
-                            const td = document.createElement('td');
-                            td.textContent = cellData;
-                            td.classList.add('py-2', 'px-3', 'border-b', 'border-gray-200', 'text-xs', 'text-gray-800');
-                            tr.appendChild(td);
-                        });
-                        tbody.appendChild(tr);
-                    });
-                    table.appendChild(tbody);
-
-                    tableContainer.appendChild(table);
-
+                
+                if (data.valores && data.valores.length > 1) {
+                    headers = data.valores[0];
+                    rawData = data.valores.slice(1);
+                    currentData = [...rawData];
+                    
+                    renderTable();
+                    elements.filtersContainer.classList.remove('hidden');
                 } else {
-                    dataDisplay.textContent = 'No se encontraron datos o la estructura no es la esperada.';
-                    dataDisplay.classList.remove('hidden');
-                    dataDisplay.style.color = '#ef4444';
+                    elements.dataMessage.textContent = 'No se encontraron datos en la hoja seleccionada';
+                    elements.dataMessage.classList.remove('hidden');
                 }
-
             } catch (error) {
-                dataDisplay.textContent = `Error al obtener los datos: \n${error.message}`;
-                dataDisplay.classList.remove('hidden');
-                dataDisplay.style.color = '#ef4444';
-                console.error('Error fetching data:', error);
+                console.error("Error al obtener datos:", error);
+                elements.dataMessage.textContent = `Error al cargar datos: ${error.message}`;
+                elements.dataMessage.classList.remove('hidden');
             } finally {
-                loadingIndicator.classList.add('hidden');
+                elements.loadingIndicator.classList.add('hidden');
             }
         }
 
-        // Event listeners
-        fetchDataBtn.addEventListener('click', fetchData);
+        // Renderizar tabla con los datos
+        function renderTable() {
+            elements.tableContainer.innerHTML = '';
+            
+            if (currentData.length === 0) {
+                elements.dataMessage.textContent = 'No hay datos que coincidan con los filtros';
+                elements.dataMessage.classList.remove('hidden');
+                return;
+            }
+            
+            const table = document.createElement('table');
+            table.className = 'min-w-full divide-y divide-gray-200';
+            
+            // Crear encabezado
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                th.className = 'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider';
+                
+                if (header === 'STOCK') {
+                    th.innerHTML += ' <span class="sort-icon">↕</span>';
+                    th.style.cursor = 'pointer';
+                    th.onclick = () => sortData('stock', sortDirection === 'asc' ? 'desc' : 'asc');
+                }
+                
+                headerRow.appendChild(th);
+            });
+            
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            
+            // Crear cuerpo
+            const tbody = document.createElement('tbody');
+            tbody.className = 'bg-white divide-y divide-gray-200';
+            
+            currentData.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+                
+                row.forEach((cell, index) => {
+                    const td = document.createElement('td');
+                    td.textContent = cell;
+                    td.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
+                    
+                    // Resaltar stock cero
+                    if (headers[index] === 'STOCK' && cell === '0') {
+                        td.className += ' stock-zero';
+                    }
+                    
+                    tr.appendChild(td);
+                });
+                
+                tbody.appendChild(tr);
+            });
+            
+            table.appendChild(tbody);
+            elements.tableContainer.appendChild(table);
+        }
+
+        // Funciones de filtrado
+        let sortDirection = null;
+
+        function sortData(field, direction) {
+            const fieldIndex = headers.indexOf(field.toUpperCase());
+            if (fieldIndex === -1) return;
+            
+            sortDirection = direction;
+            
+            currentData.sort((a, b) => {
+                const valueA = parseFloat(a[fieldIndex]) || 0;
+                const valueB = parseFloat(b[fieldIndex]) || 0;
+                
+                return direction === 'asc' ? valueA - valueB : valueB - valueA;
+            });
+            
+            renderTable();
+        }
+
+        function filterData(field, value) {
+            const fieldIndex = headers.indexOf(field.toUpperCase());
+            if (fieldIndex === -1) return;
+            
+            currentData = rawData.filter(row => {
+                const rowValue = parseFloat(row[fieldIndex]) || 0;
+                return rowValue === value;
+            });
+            
+            renderTable();
+        }
+
+        function resetData() {
+            currentData = [...rawData];
+            sortDirection = null;
+            renderTable();
+        }
     </script>
 </body>
 </html>
