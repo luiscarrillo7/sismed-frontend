@@ -47,20 +47,35 @@
         .table-text-xs {
             font-size: 0.75rem;
         }
+        .hidden-select {
+            display: none;
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-6xl"> 
         <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Consulta de Datos de Google Sheets</h1>
 
-        <div class="mb-6 flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <label for="sheetId" class="text-lg font-medium text-gray-700">Selecciona Hoja:</label>
-            <select id="sheetId" class="mt-1 block w-full sm:w-auto p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
-                <option value="1">FARMAMINSA EL AGUSTINO</option>
-                <option value="2">FARMAMINSA CHOSICA</option>
-                <option value="farma">FARMAMINSA ATE</option>
-            </select>
-            <button id="fetchDataBtn" class="mt-4 sm:mt-0 px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
+        <div class="mb-6 flex flex-col items-center justify-center space-y-4">
+            <div class="w-full sm:w-auto flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <label for="tipoEstablecimiento" class="text-lg font-medium text-gray-700">Tipo de Establecimiento:</label>
+                <select id="tipoEstablecimiento" class="mt-1 block w-full sm:w-auto p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
+                    <option value="">Seleccione una opción</option>
+                    <option value="centros">Centros de Salud</option>
+                    <option value="farma">FARMAMINSA</option>
+                </select>
+            </div>
+            
+            <div id="farmaciasContainer" class="w-full sm:w-auto flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 hidden-select">
+                <label for="farmaciaSelect" class="text-lg font-medium text-gray-700">Farmacia:</label>
+                <select id="farmaciaSelect" class="mt-1 block w-full sm:w-auto p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
+                    <option value="1">FARMAMINSA EL AGUSTINO</option>
+                    <option value="2">FARMAMINSA CHOSICA</option>
+                    <option value="farma">FARMAMINSA ATE</option>
+                </select>
+            </div>
+            
+            <button id="fetchDataBtn" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
                 Obtener Datos
             </button>
         </div>
@@ -72,14 +87,16 @@
         <div id="results" class="mt-8">
             <h2 class="text-2xl font-semibold text-gray-800 mb-4">Resultados:</h2>
             <div id="tableContainer" class="overflow-x-auto">
-                <p id="dataMessage" class="text-gray-600">Selecciona una hoja y haz clic en "Obtener Datos".</p>
+                <p id="dataMessage" class="text-gray-600">Seleccione un tipo de establecimiento y haga clic en "Obtener Datos".</p>
             </div>
             <pre id="dataDisplay" class="min-h-[150px] hidden mt-4"></pre>
         </div>
     </div>
 
     <script>
-        const sheetIdSelect = document.getElementById('sheetId');
+        const tipoEstablecimientoSelect = document.getElementById('tipoEstablecimiento');
+        const farmaciasContainer = document.getElementById('farmaciasContainer');
+        const farmaciaSelect = document.getElementById('farmaciaSelect');
         const fetchDataBtn = document.getElementById('fetchDataBtn');
         const tableContainer = document.getElementById('tableContainer');
         const dataDisplay = document.getElementById('dataDisplay');
@@ -88,8 +105,29 @@
 
         const API_BASE_URL = 'https://api-consulta-sismed.googlesites.cloud';
 
+        // Mostrar/ocultar selector de farmacias según selección
+        tipoEstablecimientoSelect.addEventListener('change', function() {
+            if (this.value === 'farma') {
+                farmaciasContainer.classList.remove('hidden-select');
+            } else {
+                farmaciasContainer.classList.add('hidden-select');
+            }
+        });
+
         async function fetchData() {
-            const selectedId = sheetIdSelect.value;
+            let selectedId;
+            
+            if (tipoEstablecimientoSelect.value === 'farma') {
+                selectedId = farmaciaSelect.value;
+            } else if (tipoEstablecimientoSelect.value === 'centros') {
+                selectedId = 'centros'; // Aquí puedes poner el ID real para centros de salud
+            } else {
+                dataDisplay.textContent = 'Por favor seleccione un tipo de establecimiento';
+                dataDisplay.classList.remove('hidden');
+                dataDisplay.style.color = '#ef4444';
+                return;
+            }
+
             const apiUrl = `${API_BASE_URL}/leer-sheet?id=${selectedId}`;
 
             tableContainer.innerHTML = '';
