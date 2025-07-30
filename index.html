@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta de Google Sheets</title>
+    <title>Sistema de Consulta Integrado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -47,49 +47,128 @@
         .table-text-xs {
             font-size: 0.75rem;
         }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .form-group {
+            flex: 1;
+            min-width: 250px;
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-6xl"> 
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Consulta de Datos de Google Sheets</h1>
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Sistema de Consulta Integrado</h1>
 
-        <div class="mb-6 flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <label for="sheetId" class="text-lg font-medium text-gray-700">Selecciona Hoja:</label>
-            <select id="sheetId" class="mt-1 block w-full sm:w-auto p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
-                <option value="1">FARMAMINSA EL AGUSTINO</option>
-                <option value="2">FARMAMINSA CHOSICA</option>
-                <option value="farma">FARMAMINSA ATE</option>
-            </select>
-            <button id="fetchDataBtn" class="mt-4 sm:mt-0 px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
-                Obtener Datos
-            </button>
+        <!-- Sección de selección de establecimiento -->
+        <div class="mb-8 p-6 bg-gray-50 rounded-lg">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Selección de Establecimiento</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="oficina" class="block text-sm font-medium text-gray-700 mb-1">Tipo de Establecimiento</label>
+                    <select id="oficina" onchange="cargarServicios()" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
+                        <option value="">Seleccione un tipo</option>
+                        <option value="DIRIS">ESTABLECIMIENTOS DE SALUD</option>
+                        <option value="CS">FARMAMINSA</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="inputServicio" class="block text-sm font-medium text-gray-700 mb-1">Establecimiento</label>
+                    <input type="text" id="inputServicio" placeholder="Escriba para buscar..." list="listaServicios" autocomplete="off" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
+                    <datalist id="listaServicios"></datalist>
+                </div>
+            </div>
         </div>
 
+        <!-- Sección de consulta de datos -->
+        <div class="mb-6 p-6 bg-gray-50 rounded-lg">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Consulta de Datos</h2>
+            
+            <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <button id="fetchDataBtn" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
+                    Consultar Datos
+                </button>
+            </div>
+        </div>
+
+        <!-- Indicador de carga -->
         <div id="loadingIndicator" class="text-center text-blue-600 text-lg font-medium hidden mb-4">
             Cargando datos...
         </div>
 
+        <!-- Resultados -->
         <div id="results" class="mt-8">
             <h2 class="text-2xl font-semibold text-gray-800 mb-4">Resultados:</h2>
             <div id="tableContainer" class="overflow-x-auto">
-                <p id="dataMessage" class="text-gray-600">Selecciona una hoja y haz clic en "Obtener Datos".</p>
+                <p id="dataMessage" class="text-gray-600">Seleccione un establecimiento y haga clic en "Consultar Datos".</p>
             </div>
             <pre id="dataDisplay" class="min-h-[150px] hidden mt-4"></pre>
         </div>
     </div>
 
     <script>
-        const sheetIdSelect = document.getElementById('sheetId');
-        const fetchDataBtn = document.getElementById('fetchDataBtn');
+        // Datos de establecimientos
+        const servicios = {
+            DIRIS: ["C.S CATALINA HUANCA", "C.S.M.C DAVID TEJADA"],
+            CS: ["FARMAMINSA-EL AGUSTINO", "FARMAMINSA-ATE", "FARMAMINSA-CHOSICA"]
+        };
+
+        // Mapeo de establecimientos a IDs de hojas
+        const establecimientoIds = {
+            "FARMAMINSA-EL AGUSTINO": "1",
+            "FARMAMINSA-CHOSICA": "2",
+            "FARMAMINSA-ATE": "farma"
+        };
+
+        // Elementos del DOM
         const tableContainer = document.getElementById('tableContainer');
         const dataDisplay = document.getElementById('dataDisplay');
         const dataMessage = document.getElementById('dataMessage');
         const loadingIndicator = document.getElementById('loadingIndicator');
+        const fetchDataBtn = document.getElementById('fetchDataBtn');
 
         const API_BASE_URL = 'https://api-consulta-sismed.googlesites.cloud';
 
+        // Cargar servicios según tipo de establecimiento seleccionado
+        function cargarServicios() {
+            const oficina = document.getElementById("oficina").value;
+            const inputServicio = document.getElementById("inputServicio");
+            const datalist = document.getElementById("listaServicios");
+
+            inputServicio.value = "";
+            datalist.innerHTML = "";
+
+            if (servicios[oficina]) {
+                servicios[oficina].forEach(area => {
+                    const option = document.createElement("option");
+                    option.value = area;
+                    datalist.appendChild(option);
+                });
+            }
+        }
+
+        // Consultar datos de la API
         async function fetchData() {
-            const selectedId = sheetIdSelect.value;
+            const establecimiento = document.getElementById('inputServicio').value;
+            
+            // Validar selección
+            if (!establecimiento) {
+                alert("¡Por favor seleccione un establecimiento válido!");
+                return;
+            }
+            
+            // Obtener ID de la hoja
+            const selectedId = establecimientoIds[establecimiento];
+            if (!selectedId) {
+                alert("No se encontró el ID de hoja para este establecimiento");
+                return;
+            }
+
             const apiUrl = `${API_BASE_URL}/leer-sheet?id=${selectedId}`;
 
             tableContainer.innerHTML = '';
@@ -115,7 +194,7 @@
                     const table = document.createElement('table');
                     table.classList.add('min-w-full', 'bg-white', 'shadow-md', 'rounded-lg', 'overflow-hidden', 'table-auto');
 
-                    // Create table header
+                    // Crear encabezado de tabla
                     const thead = document.createElement('thead');
                     const headerRow = document.createElement('tr');
                     headers.forEach(headerText => {
@@ -127,7 +206,7 @@
                     thead.appendChild(headerRow);
                     table.appendChild(thead);
 
-                    // Create table body
+                    // Crear cuerpo de tabla
                     const tbody = document.createElement('tbody');
                     rows.forEach(rowData => {
                         const tr = document.createElement('tr');
@@ -160,6 +239,7 @@
             }
         }
 
+        // Event listeners
         fetchDataBtn.addEventListener('click', fetchData);
     </script>
 </body>
