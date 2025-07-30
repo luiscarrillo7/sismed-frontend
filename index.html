@@ -66,12 +66,22 @@
                 </select>
             </div>
             
+            <!-- Selector para FARMAMINSA -->
             <div id="farmaciasContainer" class="w-full sm:w-auto flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 hidden-select">
                 <label for="farmaciaSelect" class="text-lg font-medium text-gray-700">Farmacia:</label>
                 <select id="farmaciaSelect" class="mt-1 block w-full sm:w-auto p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
                     <option value="1">FARMAMINSA EL AGUSTINO</option>
                     <option value="2">FARMAMINSA CHOSICA</option>
                     <option value="farma">FARMAMINSA ATE</option>
+                </select>
+            </div>
+            
+            <!-- Selector para Centros de Salud -->
+            <div id="centrosSaludContainer" class="w-full sm:w-auto flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 hidden-select">
+                <label for="centroSaludSelect" class="text-lg font-medium text-gray-700">Centro de Salud:</label>
+                <select id="centroSaludSelect" class="mt-1 block w-full sm:w-auto p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-base">
+                    <option value="cs1">C.S CATALINA HUANCA</option>
+                    <option value="cs2">C.S.M.C DAVID TEJADA</option>
                 </select>
             </div>
             
@@ -97,6 +107,8 @@
         const tipoEstablecimientoSelect = document.getElementById('tipoEstablecimiento');
         const farmaciasContainer = document.getElementById('farmaciasContainer');
         const farmaciaSelect = document.getElementById('farmaciaSelect');
+        const centrosSaludContainer = document.getElementById('centrosSaludContainer');
+        const centroSaludSelect = document.getElementById('centroSaludSelect');
         const fetchDataBtn = document.getElementById('fetchDataBtn');
         const tableContainer = document.getElementById('tableContainer');
         const dataDisplay = document.getElementById('dataDisplay');
@@ -105,22 +117,30 @@
 
         const API_BASE_URL = 'https://api-consulta-sismed.googlesites.cloud';
 
-        // Mostrar/ocultar selector de farmacias según selección
+        // Mostrar/ocultar selectores según la selección
         tipoEstablecimientoSelect.addEventListener('change', function() {
+            // Ocultar todos los selectores secundarios primero
+            farmaciasContainer.classList.add('hidden-select');
+            centrosSaludContainer.classList.add('hidden-select');
+            
+            // Mostrar el selector correspondiente
             if (this.value === 'farma') {
                 farmaciasContainer.classList.remove('hidden-select');
-            } else {
-                farmaciasContainer.classList.add('hidden-select');
+            } else if (this.value === 'centros') {
+                centrosSaludContainer.classList.remove('hidden-select');
             }
         });
 
         async function fetchData() {
             let selectedId;
+            let endpoint = 'leer-sheet';
             
             if (tipoEstablecimientoSelect.value === 'farma') {
                 selectedId = farmaciaSelect.value;
             } else if (tipoEstablecimientoSelect.value === 'centros') {
-                selectedId = 'centros'; // Aquí puedes poner el ID real para centros de salud
+                selectedId = centroSaludSelect.value;
+                // Puedes cambiar el endpoint si es diferente para centros de salud
+                // endpoint = 'leer-centros-salud';
             } else {
                 dataDisplay.textContent = 'Por favor seleccione un tipo de establecimiento';
                 dataDisplay.classList.remove('hidden');
@@ -128,7 +148,7 @@
                 return;
             }
 
-            const apiUrl = `${API_BASE_URL}/leer-sheet?id=${selectedId}`;
+            const apiUrl = `${API_BASE_URL}/${endpoint}?id=${selectedId}`;
 
             tableContainer.innerHTML = '';
             dataDisplay.textContent = '';
