@@ -119,6 +119,8 @@
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            /* --- MODIFICACIÓN CLAVE 1: Fuerza el diseño de tabla fija --- */
+            table-layout: fixed; 
         }
         th {
             background-color: #3498db;
@@ -126,11 +128,18 @@
             padding: 12px 15px;
             text-align: left;
             font-weight: 600;
+            /* --- MODIFICACIÓN CLAVE 2: Asegura que el contenido no se desborde --- */
+            white-space: nowrap; /* Evita que el texto se rompa en varias líneas */
+            overflow: hidden;     /* Oculta cualquier contenido que se desborde */
+            text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es muy largo */
         }
         td {
             padding: 12px 15px;
             border-bottom: 1px solid #e9ecef;
             color: #495057;
+            white-space: nowrap; /* Evita que el texto se rompa en varias líneas */
+            overflow: hidden;     /* Oculta cualquier contenido que se desborde */
+            text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es muy largo */
         }
         tr:nth-child(even) {
             background-color: #f8f9fa;
@@ -142,20 +151,38 @@
             color: #e74c3c;
             font-weight: 600;
         }
-        /* MODIFICACIÓN CLAVE AQUÍ */
         .sortable-header {
             cursor: pointer;
-            display: flex;
+            display: flex; /* Mantén flex para alinear icono y texto */
             align-items: center;
-            /* Elimina justify-content: space-between; si quieres que el icono esté pegado al texto
-               o ajusta el padding del th si la columna es muy estrecha */
-            /* justify-content: space-between; */ 
+            /* COMENTADO: justify-content: space-between; */ 
+            /* Esto se quita si quieres que el icono esté pegado al texto */
         }
         .sort-icon {
             font-size: 0.8em;
-            margin-left: 5px; /* Añade un pequeño margen para separar el icono del texto */
+            margin-left: 5px; 
             color: rgba(255, 255, 255, 0.7);
+            flex-shrink: 0; /* Asegura que el icono no se encoja */
         }
+
+        /* --- MODIFICACIÓN CLAVE 3: Define anchos para las columnas específicas --- */
+        /* Asegúrate de que los índices de las columnas correspondan a tus datos */
+        table th:nth-child(1), table td:nth-child(1) { /* MEDICAMENTO_NOMBRE */
+            width: 40%; /* Un porcentaje más grande para el nombre */
+        }
+        table th:nth-child(2), table td:nth-child(2) { /* PRESENTACION */
+            width: 15%; 
+        }
+        table th:nth-child(3), table td:nth-child(3) { /* FECHA_STOCK */
+            width: 25%; /* Suficiente espacio para la fecha y hora */
+        }
+        table th:nth-child(4), table td:nth-child(4) { /* STOCK */
+            width: 10%; /* Suficiente para el número de stock */
+            text-align: right; /* Alinea el stock a la derecha si es un número */
+        }
+        /* Ajusta estos anchos según el número real de columnas y su contenido */
+        /* La suma de los anchos puede ser 100% o ligeramente más/menos */
+
         @media (min-width: 768px) {
             .form-row {
                 display: flex;
@@ -347,12 +374,12 @@
             
             headers.forEach((header, index) => {
                 const th = document.createElement('th');
-                th.textContent = header;
+                // IMPORTANTE: Asegúrate de que el texto del encabezado sea simple si no necesitas el icono
+                // y el icono solo se añade para las columnas ordenables.
+                th.textContent = header; // Texto por defecto
 
                 if (header === 'STOCK') {
                     th.classList.add('sortable-header');
-                    // Remove justify-content: space-between; from here or use a span inside for the icon
-                    // to prevent it from pushing the text to the left.
                     th.innerHTML = `
                         <span>${header}</span> 
                         <span class="sort-icon" id="stock-sort-icon">
@@ -360,7 +387,7 @@
                         </span>
                     `;
                     th.addEventListener('click', () => sortTableByStock(index));
-                } else if (header === 'FECHA_STOCK') { // New: Add sort for FECHA_STOCK
+                } else if (header === 'FECHA_STOCK') { 
                     th.classList.add('sortable-header');
                     th.innerHTML = `
                         <span>${header}</span> 
@@ -455,7 +482,6 @@
 
             const sortedRows = [...rows].sort((a, b) => {
                 // Assuming date format is YYYY-MM-DD HH:MM:SS.mmm as seen in the image (2025-07-31 09:08:27.999)
-                // New: Direct parsing to Date object should work for ISO-like format.
                 const dateA = new Date(a[dateColumnIndex]);
                 const dateB = new Date(b[dateColumnIndex]);
                 
