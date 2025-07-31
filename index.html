@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Consulta de Medicamentosv1</title>
+    <title>Sistema de Consulta de Medicamentos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -111,39 +111,26 @@
             color: #6c757d;
             font-size: 1.1rem;
         }
-        
-        /* === INICIO DE MODIFICACIONES PARA LA TABLA === */
-        /* Envuelve la tabla en un contenedor para permitir el scroll horizontal si es necesario */
-        .table-responsive {
-            overflow-x: auto; /* Permite el desplazamiento horizontal si la tabla es más ancha que el contenedor */
-            -webkit-overflow-scrolling: touch; /* Mejora el desplazamiento en dispositivos iOS */
-            margin-top: 15px; /* Mantiene tu margen existente */
-            background: white; /* Mantiene tu fondo existente */
-            border-radius: 8px; /* Mantiene tu radio de borde existente */
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05); /* Mantiene tu sombra existente */
-        }
-
         table {
             width: 100%;
             border-collapse: collapse;
-            /* CLAVE: Fuerza al navegador a usar los anchos definidos para las columnas */
-            table-layout: fixed; 
-            min-width: 700px; /* Establece un ancho mínimo para la tabla, si es menor se activará el scroll */
-        }
-        
-        th, td {
-            padding: 12px 10px; /* Ajusta un poco el padding horizontal si las columnas son muy estrechas */
-            text-align: left;
-            border-bottom: 1px solid #e9ecef;
-            color: #495057;
-            /* CLAVE: Rompe las palabras largas para que no desborden la celda */
-            word-wrap: break-word; 
-            overflow-wrap: break-word; /* Para mayor compatibilidad */
+            margin-top: 15px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
         }
         th {
             background-color: #3498db;
             color: white;
+            padding: 12px 15px;
+            text-align: left;
             font-weight: 600;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+            color: #495057;
         }
         tr:nth-child(even) {
             background-color: #f8f9fa;
@@ -155,50 +142,20 @@
             color: #e74c3c;
             font-weight: 600;
         }
-        
-        /* CLAVE: Define los anchos porcentuales para cada columna */
-        /* Asegúrate de que la suma de los porcentajes sea 100% */
-        table th:nth-child(1), /* MEDICAMENTO_NOMBRE */
-        table td:nth-child(1) {
-            width: 45%; 
-        }
-        table th:nth-child(2), /* PRESENTACION */
-        table td:nth-child(2) {
-            width: 20%; 
-        }
-        table th:nth-child(3), /* FECHA_STOCK */
-        table td:nth-child(3) {
-            width: 25%;
-        }
-        table th:nth-child(4), /* STOCK */
-        table td:nth-child(4) {
-            width: 10%;
-            text-align: right; /* Alinea el número de stock a la derecha */
-        }
-
-        /* Ajuste para los encabezados sorteables */
+        /* MODIFICACIÓN CLAVE AQUÍ */
         .sortable-header {
             cursor: pointer;
-            display: flex; /* Usa flexbox para alinear el texto y el ícono */
-            align-items: center; /* Centra verticalmente texto e ícono */
-            justify-content: space-between; /* Distribuye el espacio entre el texto y el ícono */
-            /* Si prefieres que el ícono esté justo al lado del texto, elimina 'justify-content' y ajusta 'margin-left' del ícono */
-            /* Si el texto es muy largo en el encabezado, quizás 'justify-content: flex-start;' y un 'margin-right' en el texto. */
-        }
-        .sortable-header span:first-child {
-            /* Permite que el texto se encoja si es necesario para dar espacio al icono */
-            flex-shrink: 1; 
-            min-width: 0; /* Necesario para que flex-shrink funcione correctamente con texto largo */
-            margin-right: 5px; /* Un pequeño margen entre el texto del encabezado y el icono */
+            display: flex;
+            align-items: center;
+            /* Elimina justify-content: space-between; si quieres que el icono esté pegado al texto
+               o ajusta el padding del th si la columna es muy estrecha */
+            /* justify-content: space-between; */ 
         }
         .sort-icon {
             font-size: 0.8em;
-            /* margin-left: 5px; */ /* Ya no es necesario si usas justify-content: space-between */
+            margin-left: 5px; /* Añade un pequeño margen para separar el icono del texto */
             color: rgba(255, 255, 255, 0.7);
-            flex-shrink: 0; /* Evita que el ícono se encoja */
         }
-        /* === FIN DE MODIFICACIONES PARA LA TABLA === */
-
         @media (min-width: 768px) {
             .form-row {
                 display: flex;
@@ -215,24 +172,12 @@
                 display: block;
             }
         }
-        /* Media query para pantallas más pequeñas donde el scroll horizontal es más probable */
-        @media (max-width: 700px) {
-            .container {
-                margin: 15px;
-                padding: 15px;
-            }
-            .header h1 {
-                font-size: 2rem;
-            }
-            /* La tabla con min-width y overflow-x: auto ya se encargará de esto */
-            /* Si quisieras apilar las celdas en móvil, sería una reescritura más compleja */
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Sistema de Consulta de Medicamentosv1</h1>
+            <h1>Sistema de Consulta de Medicamentos</h1>
             <p>Seleccione un establecimiento para ver su inventario</p>
         </div>
         
@@ -273,8 +218,8 @@
                 Seleccione un establecimiento y haga clic en "Consultar Datos"
             </div>
             
-            <div id="tableContainer" class="table-responsive" style="display: none;">
-                </div>
+            <div id="tableContainer" style="display: none;">
+            </div>
         </div>
     </div>
 
@@ -406,6 +351,8 @@
 
                 if (header === 'STOCK') {
                     th.classList.add('sortable-header');
+                    // Remove justify-content: space-between; from here or use a span inside for the icon
+                    // to prevent it from pushing the text to the left.
                     th.innerHTML = `
                         <span>${header}</span> 
                         <span class="sort-icon" id="stock-sort-icon">
@@ -413,7 +360,7 @@
                         </span>
                     `;
                     th.addEventListener('click', () => sortTableByStock(index));
-                } else if (header === 'FECHA_STOCK') { // Add sort for FECHA_STOCK
+                } else if (header === 'FECHA_STOCK') { // New: Add sort for FECHA_STOCK
                     th.classList.add('sortable-header');
                     th.innerHTML = `
                         <span>${header}</span> 
@@ -508,6 +455,7 @@
 
             const sortedRows = [...rows].sort((a, b) => {
                 // Assuming date format is YYYY-MM-DD HH:MM:SS.mmm as seen in the image (2025-07-31 09:08:27.999)
+                // New: Direct parsing to Date object should work for ISO-like format.
                 const dateA = new Date(a[dateColumnIndex]);
                 const dateB = new Date(b[dateColumnIndex]);
                 
