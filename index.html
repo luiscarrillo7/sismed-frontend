@@ -349,17 +349,21 @@
 
                 if (header === 'STOCK') {
                     th.classList.add('sortable-header');
-                  th.innerHTML = `
-    <span>${header}</span> 
-    <span class="sort-icon">${iconCode}</span>
-`;
+                    th.innerHTML = `
+                        ${header} 
+                        <span class="sort-icon" id="stock-sort-icon">
+                            ${currentStockSortOrder === 'asc' ? '&#9650;' : (currentStockSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
+                        </span>
+                    `;
                     th.addEventListener('click', () => sortTableByStock(index));
                 } else if (header === 'FECHA_STOCK') { // New: Add sort for FECHA_STOCK
                     th.classList.add('sortable-header');
-                   th.innerHTML = `
-    <span>${header}</span> 
-    <span class="sort-icon">${iconCode}</span>
-`;
+                    th.innerHTML = `
+                        ${header} 
+                        <span class="sort-icon" id="date-sort-icon">
+                            ${currentDateSortOrder === 'asc' ? '&#9650;' : (currentDateSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
+                        </span>
+                    `;
                     th.addEventListener('click', () => sortTableByDate(index));
                 }
                 
