@@ -14,9 +14,7 @@
         }
         
         body {
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
             min-height: 100vh;
             padding: 20px;
             display: flex;
@@ -24,16 +22,10 @@
             align-items: center;
         }
         
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
         .container {
             width: 100%;
             max-width: 1200px;
-            background: rgba(255, 255, 255, 0.95);
+            background: white;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             overflow: hidden;
@@ -44,7 +36,6 @@
             color: white;
             padding: 25px;
             text-align: center;
-            position: relative;
         }
         
         .logo {
@@ -63,7 +54,6 @@
         h1 {
             font-size: 2.2rem;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
         
         .header-info {
@@ -117,7 +107,7 @@
         select, input {
             width: 100%;
             padding: 14px;
-            border: 1px solid #ddd;
+            border: 1px solid #ced4da;
             border-radius: 8px;
             font-size: 1rem;
             background: white;
@@ -386,7 +376,12 @@
                 
                 <div class="form-group">
                     <label for="inputServicio"><i class="fas fa-map-marker-alt"></i> Establecimiento</label>
-                    <input type="text" id="inputServicio" value="FARMAMINSA-CHOSICA" readonly>
+                    <select id="inputServicio">
+                        <option value="">Seleccione un establecimiento</option>
+                        <option value="1" selected>FARMAMINSA-CHOSICA</option>
+                        <option value="2">FARMAMINSA-EL AGUSTINO</option>
+                        <option value="farma">FARMAMINSA-ATE</option>
+                    </select>
                 </div>
             </div>
             
@@ -397,10 +392,10 @@
         
         <div class="filters">
             <div class="filter-title"><i class="fas fa-filter"></i> Filtrar por Stock:</div>
-            <button class="filter-btn" data-filter="asc">
+            <button class="filter-btn" id="ascFilter">
                 <i class="fas fa-sort-amount-down"></i> Menor a Mayor
             </button>
-            <button class="filter-btn" data-filter="desc">
+            <button class="filter-btn" id="descFilter">
                 <i class="fas fa-sort-amount-up"></i> Mayor a Menor
             </button>
         </div>
@@ -434,78 +429,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>SULFAMETOXAZOL + TRIMETOPRIMA</td>
-                            <td>S/P</td>
-                            <td>2025-07-03 13:57:34.000</td>
-                            <td class="stock-high">20</td>
-                        </tr>
-                        <tr>
-                            <td>METRONIDAZOL</td>
-                            <td>S/P</td>
-                            <td>2025-07-16 13:16:06.000</td>
-                            <td class="stock-high">189</td>
-                        </tr>
-                        <tr>
-                            <td>NAPROXENO</td>
-                            <td>S/P</td>
-                            <td>2025-07-30 12:11:51.000</td>
-                            <td class="stock-high">3874</td>
-                        </tr>
-                        <tr>
-                            <td>NIFEDIPINO</td>
-                            <td>S/P</td>
-                            <td>2025-07-22 12:15:09.000</td>
-                            <td class="stock-low">0</td>
-                        </tr>
-                        <tr>
-                            <td>NITROFURANTONA</td>
-                            <td>S/P</td>
-                            <td>2025-07-11 14:54:17.000</td>
-                            <td class="stock-medium">63</td>
-                        </tr>
-                        <tr>
-                            <td>PARACETAMOL</td>
-                            <td>S/P</td>
-                            <td>2025-07-30 14:36:54.999</td>
-                            <td class="stock-high">9522</td>
-                        </tr>
-                        <tr>
-                            <td>PREDNISONA</td>
-                            <td>S/P</td>
-                            <td>2025-07-30 11:25:08.000</td>
-                            <td class="stock-high">614</td>
-                        </tr>
-                        <tr>
-                            <td>PREDNISONA</td>
-                            <td>S/P</td>
-                            <td>2025-06-20 13:25:15.000</td>
-                            <td class="stock-medium">60</td>
-                        </tr>
-                        <tr>
-                            <td>PREDNISONA</td>
-                            <td>S/P</td>
-                            <td>2025-07-14 12:35:59.999</td>
-                            <td class="stock-high">397</td>
-                        </tr>
-                        <tr>
-                            <td>AMOXICILINA</td>
-                            <td>S/P</td>
-                            <td>2025-07-28 09:45:22.000</td>
-                            <td class="stock-medium">42</td>
-                        </tr>
-                        <tr>
-                            <td>IBUPROFENO</td>
-                            <td>S/P</td>
-                            <td>2025-07-29 15:20:33.000</td>
-                            <td class="stock-high">874</td>
-                        </tr>
-                        <tr>
-                            <td>LORATADINA</td>
-                            <td>S/P</td>
-                            <td>2025-07-25 11:10:15.000</td>
-                            <td class="stock-high">156</td>
-                        </tr>
+                        <!-- Los datos se cargarán dinámicamente aquí -->
                     </tbody>
                 </table>
             </div>
@@ -537,50 +461,72 @@
         // Elementos DOM
         const loadingIndicator = document.getElementById('loadingIndicator');
         const noDataMessage = document.getElementById('noDataMessage');
-        const resultsTable = document.getElementById('resultsTable');
+        const resultsTable = document.getElementById('resultsTable').querySelector('tbody');
         const fetchDataBtn = document.getElementById('fetchDataBtn');
         const medCount = document.querySelector('.med-count');
-        const filterButtons = document.querySelectorAll('.filter-btn');
+        const ascFilter = document.getElementById('ascFilter');
+        const descFilter = document.getElementById('descFilter');
         const sortableHeaders = document.querySelectorAll('th.sortable');
+        const oficinaSelect = document.getElementById('oficina');
+        const servicioSelect = document.getElementById('inputServicio');
         
-        // Mostrar datos iniciales
-        medCount.textContent = `${medicamentos.length} medicamentos`;
+        // Función para actualizar la tabla
+        function updateTable(data) {
+            resultsTable.innerHTML = '';
+            
+            if (data.length === 0) {
+                noDataMessage.style.display = 'block';
+                return;
+            }
+            
+            noDataMessage.style.display = 'none';
+            medCount.textContent = `${data.length} medicamentos`;
+            
+            data.forEach(med => {
+                const row = document.createElement('tr');
+                
+                // Determinar clase de stock según cantidad
+                let stockClass = 'stock-high';
+                if (med.stock === 0) stockClass = 'stock-low';
+                else if (med.stock < 50) stockClass = 'stock-medium';
+                
+                row.innerHTML = `
+                    <td>${med.nombre}</td>
+                    <td>${med.presentacion}</td>
+                    <td>${med.fecha}</td>
+                    <td class="${stockClass}">${med.stock}</td>
+                `;
+                
+                resultsTable.appendChild(row);
+            });
+        }
         
         // Simular carga de datos
-        fetchDataBtn.addEventListener('click', () => {
+        function fetchData() {
             loadingIndicator.style.display = 'block';
             noDataMessage.style.display = 'none';
             
             setTimeout(() => {
                 loadingIndicator.style.display = 'none';
-                resultsTable.style.display = 'table';
-            }, 1500);
-        });
+                updateTable(medicamentos);
+            }, 1000);
+        }
         
         // Funcionalidad de filtros
-        filterButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                // Quitar clase activa de todos los botones
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                
-                // Agregar clase activa al botón clickeado
-                button.classList.add('active');
-                
-                // Obtener el tipo de filtro
-                const filterType = button.getAttribute('data-filter');
-                
-                // Ordenar los datos
-                const sortedData = [...medicamentos];
-                
-                if (filterType === 'asc') {
-                    sortedData.sort((a, b) => a.stock - b.stock);
-                } else if (filterType === 'desc') {
-                    sortedData.sort((a, b) => b.stock - a.stock);
-                }
-                
-                // Actualizar la tabla
-                updateTable(sortedData);
-            });
+        ascFilter.addEventListener('click', () => {
+            ascFilter.classList.add('active');
+            descFilter.classList.remove('active');
+            
+            const sortedData = [...medicamentos].sort((a, b) => a.stock - b.stock);
+            updateTable(sortedData);
+        });
+        
+        descFilter.addEventListener('click', () => {
+            descFilter.classList.add('active');
+            ascFilter.classList.remove('active');
+            
+            const sortedData = [...medicamentos].sort((a, b) => b.stock - a.stock);
+            updateTable(sortedData);
         });
         
         // Funcionalidad de ordenamiento por encabezados
@@ -601,29 +547,26 @@
             });
         });
         
-        // Función para actualizar la tabla
-        function updateTable(data) {
-            const tbody = resultsTable.querySelector('tbody');
-            tbody.innerHTML = '';
+        // Evento para consultar datos
+        fetchDataBtn.addEventListener('click', fetchData);
+        
+        // Eventos para los selectores
+        oficinaSelect.addEventListener('change', function() {
+            servicioSelect.innerHTML = '<option value="">Seleccione un establecimiento</option>';
             
-            data.forEach(med => {
-                const row = document.createElement('tr');
-                
-                // Determinar clase de stock según cantidad
-                let stockClass = 'stock-high';
-                if (med.stock === 0) stockClass = 'stock-low';
-                else if (med.stock < 50) stockClass = 'stock-medium';
-                
-                row.innerHTML = `
-                    <td>${med.nombre}</td>
-                    <td>${med.presentacion}</td>
-                    <td>${med.fecha}</td>
-                    <td class="${stockClass}">${med.stock}</td>
+            if (this.value === 'DIRIS') {
+                servicioSelect.innerHTML += `
+                    <option value="csh">C.S CATALINA HUANCA</option>
+                    <option value="dt">C.S.M.C DAVID TEJADA</option>
                 `;
-                
-                tbody.appendChild(row);
-            });
-        }
+            } else if (this.value === 'CS') {
+                servicioSelect.innerHTML += `
+                    <option value="1">FARMAMINSA-CHOSICA</option>
+                    <option value="2">FARMAMINSA-EL AGUSTINO</option>
+                    <option value="farma">FARMAMINSA-ATE</option>
+                `;
+            }
+        });
         
         // Inicializar la tabla
         updateTable(medicamentos);
