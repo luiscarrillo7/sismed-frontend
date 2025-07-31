@@ -119,7 +119,6 @@
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-            table-layout: fixed; 
         }
         th {
             background-color: #3498db;
@@ -127,17 +126,11 @@
             padding: 12px 15px;
             text-align: left;
             font-weight: 600;
-            white-space: nowrap; 
-            overflow: hidden;     
-            text-overflow: ellipsis; 
         }
         td {
             padding: 12px 15px;
             border-bottom: 1px solid #e9ecef;
             color: #495057;
-            white-space: nowrap; 
-            overflow: hidden;     
-            text-overflow: ellipsis; 
         }
         tr:nth-child(even) {
             background-color: #f8f9fa;
@@ -151,36 +144,15 @@
         }
         .sortable-header {
             cursor: pointer;
-            display: flex; 
+            display: flex;
             align-items: center;
+            justify-content: space-between; /* To push the icon to the right */
         }
         .sort-icon {
             font-size: 0.8em;
-            margin-left: 5px; 
+            margin-left: 5px;
             color: rgba(255, 255, 255, 0.7);
-            flex-shrink: 0; 
         }
-
-        /* --- AJUSTE DE ANCHOS DE COLUMNA --- */
-        /* Revisa la posición de tus columnas en el arreglo 'headers' para estos nth-child */
-        table th:nth-child(1), table td:nth-child(1) { /* MEDICAMENTO_NOMBRE */
-            width: 35%; /* Reducido de 40% a 35% */
-        }
-        table th:nth-child(2), table td:nth-child(2) { /* PRESENTACION */
-            width: 15%; 
-        }
-        table th:nth-child(3), table td:nth-child(3) { /* FECHA_STOCK */
-            width: 30%; /* Aumentado de 25% a 30% para más espacio de la fecha/hora */
-        }
-        table th:nth-child(4), table td:nth-child(4) { /* STOCK */
-            width: 15%; /* Aumentado de 10% a 15% para el número de stock y el icono */
-            text-align: right; 
-        }
-        /* Asegúrate de que la suma de los porcentajes sea aproximadamente 100%.
-           35 + 15 + 30 + 15 = 95%. Puedes dejar un pequeño margen o ajustar más si es necesario.
-           Si tienes más columnas, añade sus selectores nth-child.
-        */
-
         @media (min-width: 768px) {
             .form-row {
                 display: flex;
@@ -244,7 +216,7 @@
             </div>
             
             <div id="tableContainer" style="display: none;">
-            </div>
+                </div>
         </div>
     </div>
 
@@ -276,8 +248,7 @@
         };
 
         let currentTableData = { headers: [], rows: [] };
-        let currentStockSortOrder = ''; // '', 'asc', 'desc' for STOCK
-        let currentDateSortOrder = ''; // '', 'asc', 'desc' for FECHA_STOCK
+        let currentSortOrder = ''; // '', 'asc', 'desc'
 
         // Inicialización
         document.addEventListener('DOMContentLoaded', () => {
@@ -322,9 +293,7 @@
             elements.loadingIndicator.style.display = 'block';
             elements.tableContainer.style.display = 'none';
             elements.dataMessage.style.display = 'none';
-            
-            currentStockSortOrder = ''; // Reset sort order on new fetch
-            currentDateSortOrder = ''; // Reset sort order on new fetch
+            currentSortOrder = ''; // Reset sort order on new fetch
 
             try {
                 const response = await fetch(`${API_BASE_URL}/leer-sheet?id=${sheetId}`);
@@ -372,26 +341,17 @@
             
             headers.forEach((header, index) => {
                 const th = document.createElement('th');
-                th.textContent = header; 
+                th.textContent = header;
 
                 if (header === 'STOCK') {
                     th.classList.add('sortable-header');
                     th.innerHTML = `
-                        <span>${header}</span> 
+                        ${header} 
                         <span class="sort-icon" id="stock-sort-icon">
-                            ${currentStockSortOrder === 'asc' ? '&#9650;' : (currentStockSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
+                            ${currentSortOrder === 'asc' ? '&#9650;' : (currentSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
                         </span>
                     `;
                     th.addEventListener('click', () => sortTableByStock(index));
-                } else if (header === 'FECHA_STOCK') { 
-                    th.classList.add('sortable-header');
-                    th.innerHTML = `
-                        <span>${header}</span> 
-                        <span class="sort-icon" id="date-sort-icon">
-                            ${currentDateSortOrder === 'asc' ? '&#9650;' : (currentDateSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
-                        </span>
-                    `;
-                    th.addEventListener('click', () => sortTableByDate(index));
                 }
                 
                 headerRow.appendChild(th);
@@ -430,68 +390,27 @@
         function sortTableByStock(stockColumnIndex) {
             const { headers, rows } = currentTableData;
 
-            // Reset other sort order
-            currentDateSortOrder = '';
-
             let newSortOrder = '';
-            if (currentStockSortOrder === '' || currentStockSortOrder === 'desc') {
+            if (currentSortOrder === '' || currentSortOrder === 'desc') {
                 newSortOrder = 'asc';
             } else {
                 newSortOrder = 'desc';
             }
-            currentStockSortOrder = newSortOrder;
+            currentSortOrder = newSortOrder;
 
             const sortedRows = [...rows].sort((a, b) => {
                 const stockA = parseInt(a[stockColumnIndex], 10);
                 const stockB = parseInt(b[stockColumnIndex], 10);
 
                 if (isNaN(stockA) || isNaN(stockB)) {
-                    if (isNaN(stockA) && isNaN(stockB)) return 0;
-                    if (isNaN(stockA)) return newSortOrder === 'asc' ? 1 : -1;
-                    if (isNaN(stockB)) return newSortOrder === 'asc' ? -1 : 1;
+                    // Handle non-numeric stock values (e.g., keep original order or put them at the end)
+                    return 0; 
                 }
 
                 if (newSortOrder === 'asc') {
                     return stockA - stockB;
                 } else {
                     return stockB - stockA;
-                }
-            });
-            
-            renderTable(headers, sortedRows);
-        }
-
-        // New: Sort table by FECHA_STOCK column
-        function sortTableByDate(dateColumnIndex) {
-            const { headers, rows } = currentTableData;
-
-            // Reset other sort order
-            currentStockSortOrder = '';
-
-            let newSortOrder = '';
-            if (currentDateSortOrder === '' || currentDateSortOrder === 'desc') {
-                newSortOrder = 'asc';
-            } else {
-                newSortOrder = 'desc';
-            }
-            currentDateSortOrder = newSortOrder;
-
-            const sortedRows = [...rows].sort((a, b) => {
-                // Assuming date format is YYYY-MM-DD HH:MM:SS.mmm as seen in the image (2025-07-31 09:08:27.999)
-                const dateA = new Date(a[dateColumnIndex]);
-                const dateB = new Date(b[dateColumnIndex]);
-                
-                // Handle invalid dates (e.g., put them at the end)
-                if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
-                    if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
-                    if (isNaN(dateA.getTime())) return newSortOrder === 'asc' ? 1 : -1;
-                    if (isNaN(dateB.getTime())) return newSortOrder === 'asc' ? -1 : 1;
-                }
-
-                if (newSortOrder === 'asc') {
-                    return dateA.getTime() - dateB.getTime();
-                } else {
-                    return dateB.getTime() - dateA.getTime();
                 }
             });
             
