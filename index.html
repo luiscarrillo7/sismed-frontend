@@ -142,16 +142,18 @@
             font-weight: 600;
         }
         .sortable-header {
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between; /* To push the icon to the right */
-        }
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    white-space: nowrap;
+    padding-right: 10px; /* Espacio para el ícono */
+}
         .sort-icon {
-            font-size: 0.8em;
-            margin-left: 5px;
-            color: rgba(255, 255, 255, 0.7);
-        }
+    font-size: 0.9em;
+    margin-left: 8px;
+    min-width: 16px;
+    text-align: center;
+}
         @media (min-width: 768px) {
             .form-row {
                 display: flex;
@@ -347,21 +349,17 @@
 
                 if (header === 'STOCK') {
                     th.classList.add('sortable-header');
-                    th.innerHTML = `
-                        ${header} 
-                        <span class="sort-icon" id="stock-sort-icon">
-                            ${currentStockSortOrder === 'asc' ? '&#9650;' : (currentStockSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
-                        </span>
-                    `;
+                  th.innerHTML = `
+    <span>${header}</span> 
+    <span class="sort-icon">${iconCode}</span>
+`;
                     th.addEventListener('click', () => sortTableByStock(index));
                 } else if (header === 'FECHA_STOCK') { // New: Add sort for FECHA_STOCK
                     th.classList.add('sortable-header');
-                    th.innerHTML = `
-                        ${header} 
-                        <span class="sort-icon" id="date-sort-icon">
-                            ${currentDateSortOrder === 'asc' ? '&#9650;' : (currentDateSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
-                        </span>
-                    `;
+                   th.innerHTML = `
+    <span>${header}</span> 
+    <span class="sort-icon">${iconCode}</span>
+`;
                     th.addEventListener('click', () => sortTableByDate(index));
                 }
                 
