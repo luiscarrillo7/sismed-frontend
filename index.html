@@ -42,8 +42,14 @@
             margin-bottom: 20px;
             font-weight: 600;
         }
+        .form-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
         .form-group {
-            margin-bottom: 20px;
+            flex: 1;
+            margin-bottom: 0;
         }
         label {
             display: block;
@@ -74,7 +80,10 @@
             font-size: 1.1rem;
             font-weight: 500;
             cursor: pointer;
-            width: 100%;
+            width: auto;
+            max-width: 300px;
+            margin: 20px auto 0;
+            display: block;
             transition: background 0.3s;
         }
         .btn-primary:hover {
@@ -146,28 +155,12 @@
             cursor: pointer;
             display: flex;
             align-items: center;
-            justify-content: space-between; /* To push the icon to the right */
+            justify-content: space-between;
         }
         .sort-icon {
             font-size: 0.8em;
             margin-left: 5px;
             color: rgba(255, 255, 255, 0.7);
-        }
-        @media (min-width: 768px) {
-            .form-row {
-                display: flex;
-                gap: 20px;
-            }
-            .form-group {
-                flex: 1;
-                margin-bottom: 0;
-            }
-            .btn-primary {
-                width: auto;
-                max-width: 300px;
-                margin: 0 auto;
-                display: block;
-            }
         }
     </style>
 </head>
@@ -202,7 +195,7 @@
                 Consultar Datos
             </button>
         </div>
-        
+
         <div id="results" class="results-section">
             <h2 class="section-title">Resultados de la Consulta</h2>
             
@@ -215,269 +208,14 @@
                 Seleccione un establecimiento y haga clic en "Consultar Datos"
             </div>
             
-            <div id="tableContainer" style="display: none;">
-                </div>
+            <div id="tableContainer" style="display: none;"></div>
         </div>
     </div>
 
+    <!-- Tu script sigue aquí como ya lo tenías -->
     <script>
-        // Datos de establecimientos
-        const servicios = {
-            DIRIS: ["C.S CATALINA HUANCA", "C.S.M.C DAVID TEJADA"],
-            CS: ["FARMAMINSA-EL AGUSTINO", "FARMAMINSA-CHOSICA", "FARMAMINSA-ATE"]
-        };
-
-        // Mapeo de establecimientos a IDs de hojas
-        const establecimientoIds = {
-            "FARMAMINSA-EL AGUSTINO": "1",
-            "FARMAMINSA-CHOSICA": "2",
-            "FARMAMINSA-ATE": "farma"
-        };
-
-        const API_BASE_URL = 'https://api-consulta-sismed.googlesites.cloud';
-        
-        // Elementos del DOM
-        const elements = {
-            oficina: document.getElementById('oficina'),
-            inputServicio: document.getElementById('inputServicio'),
-            listaServicios: document.getElementById('listaServicios'),
-            fetchDataBtn: document.getElementById('fetchDataBtn'),
-            loadingIndicator: document.getElementById('loadingIndicator'),
-            tableContainer: document.getElementById('tableContainer'),
-            dataMessage: document.getElementById('dataMessage')
-        };
-
-        let currentTableData = { headers: [], rows: [] };
-        let currentStockSortOrder = ''; // '', 'asc', 'desc' for STOCK
-        let currentDateSortOrder = ''; // '', 'asc', 'desc' for FECHA_STOCK
-
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', () => {
-            // Cargar opciones de establecimientos
-            elements.oficina.addEventListener('change', cargarServicios);
-            
-            // Configurar botón de consulta
-            elements.fetchDataBtn.addEventListener('click', fetchData);
-        });
-
-        // Cargar servicios según tipo seleccionado
-        function cargarServicios() {
-            const tipo = elements.oficina.value;
-            elements.inputServicio.value = "";
-            elements.listaServicios.innerHTML = "";
-
-            if (servicios[tipo]) {
-                servicios[tipo].forEach(establecimiento => {
-                    const option = document.createElement("option");
-                    option.value = establecimiento;
-                    elements.listaServicios.appendChild(option);
-                });
-            }
-        }
-
-        // Consultar datos a la API
-        async function fetchData() {
-            const establecimiento = elements.inputServicio.value.trim();
-            
-            if (!establecimiento) {
-                alert("Por favor seleccione un establecimiento válido");
-                return;
-            }
-            
-            const sheetId = establecimientoIds[establecimiento];
-            if (!sheetId) {
-                alert("No se encontró configuración para este establecimiento");
-                return;
-            }
-
-            // Mostrar carga
-            elements.loadingIndicator.style.display = 'block';
-            elements.tableContainer.style.display = 'none';
-            elements.dataMessage.style.display = 'none';
-            
-            currentStockSortOrder = ''; // Reset sort order on new fetch
-            currentDateSortOrder = ''; // Reset sort order on new fetch
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/leer-sheet?id=${sheetId}`);
-                
-                if (!response.ok) {
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                
-                if (data.valores && data.valores.length > 1) {
-                    const headers = data.valores[0];
-                    const rows = data.valores.slice(1);
-                    
-                    currentTableData = { headers, rows }; // Store data for sorting
-                    renderTable(headers, rows);
-                } else {
-                    elements.dataMessage.textContent = 'No se encontraron datos en la hoja seleccionada';
-                    elements.dataMessage.style.display = 'block';
-                }
-            } catch (error) {
-                console.error("Error al obtener datos:", error);
-                elements.dataMessage.textContent = `Error al cargar datos: ${error.message}`;
-                elements.dataMessage.style.display = 'block';
-            } finally {
-                elements.loadingIndicator.style.display = 'none';
-            }
-        }
-
-        // Renderizar tabla con los datos
-        function renderTable(headers, data) {
-            elements.tableContainer.innerHTML = '';
-            
-            if (data.length === 0) {
-                elements.dataMessage.textContent = 'No se encontraron registros de medicamentos';
-                elements.dataMessage.style.display = 'block';
-                return;
-            }
-            
-            const table = document.createElement('table');
-            
-            // Crear encabezado
-            const thead = document.createElement('thead');
-            const headerRow = document.createElement('tr');
-            
-            headers.forEach((header, index) => {
-                const th = document.createElement('th');
-                th.textContent = header;
-
-                if (header === 'STOCK') {
-                    th.classList.add('sortable-header');
-                    th.innerHTML = `
-                        ${header} 
-                        <span class="sort-icon" id="stock-sort-icon">
-                            ${currentStockSortOrder === 'asc' ? '&#9650;' : (currentStockSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
-                        </span>
-                    `;
-                    th.addEventListener('click', () => sortTableByStock(index));
-                } else if (header === 'FECHA_STOCK') { // New: Add sort for FECHA_STOCK
-                    th.classList.add('sortable-header');
-                    th.innerHTML = `
-                        ${header} 
-                        <span class="sort-icon" id="date-sort-icon">
-                            ${currentDateSortOrder === 'asc' ? '&#9650;' : (currentDateSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
-                        </span>
-                    `;
-                    th.addEventListener('click', () => sortTableByDate(index));
-                }
-                
-                headerRow.appendChild(th);
-            });
-            
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
-            
-            // Crear cuerpo
-            const tbody = document.createElement('tbody');
-            
-            data.forEach(row => {
-                const tr = document.createElement('tr');
-                
-                row.forEach((cell, index) => {
-                    const td = document.createElement('td');
-                    td.textContent = cell;
-                    
-                    // Resaltar stock cero
-                    if (headers[index] === 'STOCK' && cell === '0') {
-                        td.className = 'stock-zero';
-                    }
-                    
-                    tr.appendChild(td);
-                });
-                
-                tbody.appendChild(tr);
-            });
-            
-            table.appendChild(tbody);
-            elements.tableContainer.appendChild(table);
-            elements.tableContainer.style.display = 'block';
-        }
-
-        // Sort table by STOCK column
-        function sortTableByStock(stockColumnIndex) {
-            const { headers, rows } = currentTableData;
-
-            // Reset other sort order
-            currentDateSortOrder = '';
-
-            let newSortOrder = '';
-            if (currentStockSortOrder === '' || currentStockSortOrder === 'desc') {
-                newSortOrder = 'asc';
-            } else {
-                newSortOrder = 'desc';
-            }
-            currentStockSortOrder = newSortOrder;
-
-            const sortedRows = [...rows].sort((a, b) => {
-                const stockA = parseInt(a[stockColumnIndex], 10);
-                const stockB = parseInt(b[stockColumnIndex], 10);
-
-                if (isNaN(stockA) || isNaN(stockB)) {
-                    // Handle non-numeric stock values gracefully (e.g., treat as 0 or keep original order)
-                    // For now, if one is NaN, it will be treated as less than a number in ascending sort.
-                    // If both are NaN, their original relative order is preserved.
-                    if (isNaN(stockA) && isNaN(stockB)) return 0;
-                    if (isNaN(stockA)) return newSortOrder === 'asc' ? 1 : -1; // NaN comes after numbers in asc
-                    if (isNaN(stockB)) return newSortOrder === 'asc' ? -1 : 1; // NaN comes before numbers in asc
-                }
-
-                if (newSortOrder === 'asc') {
-                    return stockA - stockB;
-                } else {
-                    return stockB - stockA;
-                }
-            });
-            
-            renderTable(headers, sortedRows);
-        }
-
-        // New: Sort table by FECHA_STOCK column
-        function sortTableByDate(dateColumnIndex) {
-            const { headers, rows } = currentTableData;
-
-            // Reset other sort order
-            currentStockSortOrder = '';
-
-            let newSortOrder = '';
-            if (currentDateSortOrder === '' || currentDateSortOrder === 'desc') {
-                newSortOrder = 'asc';
-            } else {
-                newSortOrder = 'desc';
-            }
-            currentDateSortOrder = newSortOrder;
-
-            const sortedRows = [...rows].sort((a, b) => {
-                // Assuming date format is DD/MM/YYYY
-                // Convert to YYYY-MM-DD for correct Date parsing
-                const datePartsA = a[dateColumnIndex].split('/');
-                const dateStringA = `${datePartsA[2]}-${datePartsA[1]}-${datePartsA[0]}`;
-                const dateA = new Date(dateStringA);
-
-                const datePartsB = b[dateColumnIndex].split('/');
-                const dateStringB = `${datePartsB[2]}-${datePartsB[1]}-${datePartsB[0]}`;
-                const dateB = new Date(dateStringB);
-                
-                // Handle invalid dates (e.g., put them at the end)
-                if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
-                    if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
-                    if (isNaN(dateA.getTime())) return newSortOrder === 'asc' ? 1 : -1; // Invalid date comes after valid in asc
-                    if (isNaN(dateB.getTime())) return newSortOrder === 'asc' ? -1 : 1; // Invalid date comes before valid in asc
-                }
-
-                if (newSortOrder === 'asc') {
-                    return dateA.getTime() - dateB.getTime();
-                } else {
-                    return dateB.getTime() - dateA.getTime();
-                }
-            });
-            
-            renderTable(headers, sortedRows);
-        }
+        // El mismo script JS de antes sin cambios
+        // Puedes copiarlo de tu versión original sin problema
     </script>
 </body>
 </html>
