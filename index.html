@@ -12,7 +12,7 @@
             background-color: #f3f4f6;
         }
         .container {
-            max-width: 1200px; /* Aumentar el ancho máximo del contenedor principal */
+            max-width: 1000px;
             margin: 30px auto;
             padding: 20px;
             background: white;
@@ -111,34 +111,26 @@
             color: #6c757d;
             font-size: 1.1rem;
         }
-        
-        /* === ESTILOS DE TABLA MEJORADOS PARA RESPONSIVIDAD === */
-        .table-wrapper {
-            overflow-x: auto; /* Permite scroll horizontal en pantallas pequeñas */
-            -webkit-overflow-scrolling: touch; /* Suaviza el scroll en iOS */
-            margin-top: 15px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-        }
-
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 600px; /* Ancho mínimo para la tabla para evitar que se comprima demasiado */
-            table-layout: fixed; /* Esto es CLAVE: asegura que las columnas respeten los anchos definidos */
-        }
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #e9ecef;
-            word-wrap: break-word; /* Rompe palabras largas que desbordan */
-            overflow-wrap: break-word; /* Para mayor compatibilidad */
+            margin-top: 15px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
         }
         th {
             background-color: #3498db;
             color: white;
+            padding: 12px 15px;
+            text-align: left;
             font-weight: 600;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+            color: #495057;
         }
         tr:nth-child(even) {
             background-color: #f8f9fa;
@@ -150,65 +142,35 @@
             color: #e74c3c;
             font-weight: 600;
         }
-        
-        /* Ajuste de ancho de columnas para mejorar la distribución */
-        /* Si los datos de las columnas son variables, considera ajustar estos porcentajes */
-        table th:nth-child(1), /* MEDICAMENTO_NOMBRE */
-        table td:nth-child(1) {
-            width: 45%; /* Dale más espacio al nombre del medicamento */
-        }
-        table th:nth-child(2), /* PRESENTACION */
-        table td:nth-child(2) {
-            width: 20%; 
-        }
-        table th:nth-child(3), /* FECHA_STOCK */
-        table td:nth-child(3) {
-            width: 25%;
-        }
-        table th:nth-child(4), /* STOCK */
-        table td:nth-child(4) {
-            width: 10%; /* Suficiente para el número de stock */
-            text-align: right; /* Alinea el stock a la derecha para mejor lectura */
-        }
-
-        /* MODIFICACIÓN CLAVE EN sortable-header */
+        /* MODIFICACIÓN CLAVE AQUÍ */
         .sortable-header {
             cursor: pointer;
             display: flex;
             align-items: center;
-            /* No usamos justify-content: space-between; aquí. */
-        }
-        .sortable-header span:first-child {
-            flex-grow: 1; /* Permite que el texto ocupe el espacio restante */
-            min-width: 0; /* Asegura que el texto se pueda encoger si es necesario */
+            /* Elimina justify-content: space-between; si quieres que el icono esté pegado al texto
+               o ajusta el padding del th si la columna es muy estrecha */
+            /* justify-content: space-between; */ 
         }
         .sort-icon {
             font-size: 0.8em;
             margin-left: 5px; /* Añade un pequeño margen para separar el icono del texto */
             color: rgba(255, 255, 255, 0.7);
-            flex-shrink: 0; /* Evita que el icono se encoja */
         }
-        /* Fin de modificaciones clave */
-
-
-        @media (max-width: 767px) {
-            .container {
-                margin: 15px;
-                padding: 15px;
-            }
-            .header h1 {
-                font-size: 1.8rem;
-            }
+        @media (min-width: 768px) {
             .form-row {
-                flex-direction: column; /* Apila los elementos del formulario en pantallas pequeñas */
-                gap: 0;
+                display: flex;
+                gap: 20px;
+            }
+            .form-group {
+                flex: 1;
+                margin-bottom: 0;
             }
             .btn-primary {
-                width: 100%;
-                max-width: none;
+                width: auto;
+                max-width: 300px;
+                margin: 0 auto;
+                display: block;
             }
-            /* Considerar ocultar columnas o apilar en CSS si la tabla se vuelve ilegible */
-            /* Por ejemplo, podrías hacer un display: block en td y th y añadir data-labels */
         }
     </style>
 </head>
@@ -256,8 +218,8 @@
                 Seleccione un establecimiento y haga clic en "Consultar Datos"
             </div>
             
-            <div id="tableContainer" class="table-wrapper" style="display: none;">
-                </div>
+            <div id="tableContainer" style="display: none;">
+            </div>
         </div>
     </div>
 
@@ -389,6 +351,8 @@
 
                 if (header === 'STOCK') {
                     th.classList.add('sortable-header');
+                    // Remove justify-content: space-between; from here or use a span inside for the icon
+                    // to prevent it from pushing the text to the left.
                     th.innerHTML = `
                         <span>${header}</span> 
                         <span class="sort-icon" id="stock-sort-icon">
@@ -396,7 +360,7 @@
                         </span>
                     `;
                     th.addEventListener('click', () => sortTableByStock(index));
-                } else if (header === 'FECHA_STOCK') { // Add sort for FECHA_STOCK
+                } else if (header === 'FECHA_STOCK') { // New: Add sort for FECHA_STOCK
                     th.classList.add('sortable-header');
                     th.innerHTML = `
                         <span>${header}</span> 
@@ -491,6 +455,7 @@
 
             const sortedRows = [...rows].sort((a, b) => {
                 // Assuming date format is YYYY-MM-DD HH:MM:SS.mmm as seen in the image (2025-07-31 09:08:27.999)
+                // New: Direct parsing to Date object should work for ISO-like format.
                 const dateA = new Date(a[dateColumnIndex]);
                 const dateB = new Date(b[dateColumnIndex]);
                 
