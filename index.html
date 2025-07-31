@@ -142,6 +142,17 @@
             color: #e74c3c;
             font-weight: 600;
         }
+        .sortable-header {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* To push the icon to the right */
+        }
+        .sort-icon {
+            font-size: 0.8em;
+            margin-left: 5px;
+            color: rgba(255, 255, 255, 0.7);
+        }
         @media (min-width: 768px) {
             .form-row {
                 display: flex;
@@ -205,8 +216,7 @@
             </div>
             
             <div id="tableContainer" style="display: none;">
-                <!-- Aquí se mostrará la tabla con los resultados -->
-            </div>
+                </div>
         </div>
     </div>
 
@@ -214,7 +224,7 @@
         // Datos de establecimientos
         const servicios = {
             DIRIS: ["C.S CATALINA HUANCA", "C.S.M.C DAVID TEJADA"],
-            CS: ["FARMAMINSA-EL AGUSTINO", "FARMAMINSA-ATE", "FARMAMINSA-CHOSICA"]
+            CS: ["FARMAMINSA-EL AGUSTINO", "FARMAMINSA-CHOSICA", "FARMAMINSA-ATE"]
         };
 
         // Mapeo de establecimientos a IDs de hojas
@@ -236,6 +246,9 @@
             tableContainer: document.getElementById('tableContainer'),
             dataMessage: document.getElementById('dataMessage')
         };
+
+        let currentTableData = { headers: [], rows: [] };
+        let currentSortOrder = ''; // '', 'asc', 'desc'
 
         // Inicialización
         document.addEventListener('DOMContentLoaded', () => {
@@ -280,6 +293,7 @@
             elements.loadingIndicator.style.display = 'block';
             elements.tableContainer.style.display = 'none';
             elements.dataMessage.style.display = 'none';
+            currentSortOrder = ''; // Reset sort order on new fetch
 
             try {
                 const response = await fetch(`${API_BASE_URL}/leer-sheet?id=${sheetId}`);
@@ -294,6 +308,7 @@
                     const headers = data.valores[0];
                     const rows = data.valores.slice(1);
                     
+                    currentTableData = { headers, rows }; // Store data for sorting
                     renderTable(headers, rows);
                 } else {
                     elements.dataMessage.textContent = 'No se encontraron datos en la hoja seleccionada';
@@ -324,9 +339,21 @@
             const thead = document.createElement('thead');
             const headerRow = document.createElement('tr');
             
-            headers.forEach(header => {
+            headers.forEach((header, index) => {
                 const th = document.createElement('th');
                 th.textContent = header;
+
+                if (header === 'STOCK') {
+                    th.classList.add('sortable-header');
+                    th.innerHTML = `
+                        ${header} 
+                        <span class="sort-icon" id="stock-sort-icon">
+                            ${currentSortOrder === 'asc' ? '&#9650;' : (currentSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
+                        </span>
+                    `;
+                    th.addEventListener('click', () => sortTableByStock(index));
+                }
+                
                 headerRow.appendChild(th);
             });
             
@@ -357,6 +384,37 @@
             table.appendChild(tbody);
             elements.tableContainer.appendChild(table);
             elements.tableContainer.style.display = 'block';
+        }
+
+        // Sort table by STOCK column
+        function sortTableByStock(stockColumnIndex) {
+            const { headers, rows } = currentTableData;
+
+            let newSortOrder = '';
+            if (currentSortOrder === '' || currentSortOrder === 'desc') {
+                newSortOrder = 'asc';
+            } else {
+                newSortOrder = 'desc';
+            }
+            currentSortOrder = newSortOrder;
+
+            const sortedRows = [...rows].sort((a, b) => {
+                const stockA = parseInt(a[stockColumnIndex], 10);
+                const stockB = parseInt(b[stockColumnIndex], 10);
+
+                if (isNaN(stockA) || isNaN(stockB)) {
+                    // Handle non-numeric stock values (e.g., keep original order or put them at the end)
+                    return 0; 
+                }
+
+                if (newSortOrder === 'asc') {
+                    return stockA - stockB;
+                } else {
+                    return stockB - stockA;
+                }
+            });
+            
+            renderTable(headers, sortedRows);
         }
     </script>
 </body>
