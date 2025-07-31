@@ -329,75 +329,79 @@
 
         // Renderizar tabla con los datos
         function renderTable(headers, data) {
-            elements.tableContainer.innerHTML = '';
-            
-            if (data.length === 0) {
-                elements.dataMessage.textContent = 'No se encontraron registros de medicamentos';
-                elements.dataMessage.style.display = 'block';
-                return;
-            }
-            
-            const table = document.createElement('table');
-            
-            // Crear encabezado
-            const thead = document.createElement('thead');
-            const headerRow = document.createElement('tr');
-            
-            headers.forEach((header, index) => {
-                const th = document.createElement('th');
-                th.textContent = header;
+    elements.tableContainer.innerHTML = '';
 
-                if (header === 'STOCK') {
-                    th.classList.add('sortable-header');
-                    th.innerHTML = `
-                        ${header} 
-                        <span class="sort-icon" id="stock-sort-icon">
-                            ${currentStockSortOrder === 'asc' ? '&#9650;' : (currentStockSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
-                        </span>
-                    `;
-                    th.addEventListener('click', () => sortTableByStock(index));
-                } else if (header === 'FECHA_STOCK') { // New: Add sort for FECHA_STOCK
-                    th.classList.add('sortable-header');
-                    th.innerHTML = `
-                        ${header} 
-                        <span class="sort-icon" id="date-sort-icon">
-                            ${currentDateSortOrder === 'asc' ? '&#9650;' : (currentDateSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
-                        </span>
-                    `;
-                    th.addEventListener('click', () => sortTableByDate(index));
+    if (data.length === 0) {
+        elements.dataMessage.textContent = 'No se encontraron registros de medicamentos';
+        elements.dataMessage.style.display = 'block';
+        return;
+    }
+
+    const table = document.createElement('table');
+
+    // Crear encabezado
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+
+    headers.forEach((header, index) => {
+        const th = document.createElement('th');
+
+        // Para columnas ordenables
+        if (header === 'STOCK' || header === 'FECHA_STOCK') {
+            const isStock = header === 'STOCK';
+            const currentOrder = isStock ? currentStockSortOrder : currentDateSortOrder;
+            const icon = currentOrder === 'asc' ? '▲' : (currentOrder === 'desc' ? '▼' : '⇅');
+
+            // Contenedor flex horizontal con ícono
+            th.innerHTML = `
+                <div class="inline-flex items-center gap-1 whitespace-nowrap cursor-pointer">
+                    ${header}
+                    <span class="text-sm opacity-70">${icon}</span>
+                </div>
+            `;
+
+            th.addEventListener('click', () => {
+                if (isStock) {
+                    sortTableByStock(index);
+                } else {
+                    sortTableByDate(index);
                 }
-                
-                headerRow.appendChild(th);
             });
-            
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
-            
-            // Crear cuerpo
-            const tbody = document.createElement('tbody');
-            
-            data.forEach(row => {
-                const tr = document.createElement('tr');
-                
-                row.forEach((cell, index) => {
-                    const td = document.createElement('td');
-                    td.textContent = cell;
-                    
-                    // Resaltar stock cero
-                    if (headers[index] === 'STOCK' && cell === '0') {
-                        td.className = 'stock-zero';
-                    }
-                    
-                    tr.appendChild(td);
-                });
-                
-                tbody.appendChild(tr);
-            });
-            
-            table.appendChild(tbody);
-            elements.tableContainer.appendChild(table);
-            elements.tableContainer.style.display = 'block';
+        } else {
+            th.textContent = header;
         }
+
+        headerRow.appendChild(th);
+    });
+
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Crear cuerpo
+    const tbody = document.createElement('tbody');
+
+    data.forEach(row => {
+        const tr = document.createElement('tr');
+
+        row.forEach((cell, index) => {
+            const td = document.createElement('td');
+            td.textContent = cell;
+
+            if (headers[index] === 'STOCK' && cell === '0') {
+                td.className = 'stock-zero';
+            }
+
+            tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    elements.tableContainer.appendChild(table);
+    elements.tableContainer.style.display = 'block';
+}
+
 
         // Sort table by STOCK column
         function sortTableByStock(stockColumnIndex) {
