@@ -142,15 +142,18 @@
             color: #e74c3c;
             font-weight: 600;
         }
+        /* MODIFICACIÓN CLAVE AQUÍ */
         .sortable-header {
             cursor: pointer;
             display: flex;
             align-items: center;
-            justify-content: space-between; /* To push the icon to the right */
+            /* Elimina justify-content: space-between; si quieres que el icono esté pegado al texto
+               o ajusta el padding del th si la columna es muy estrecha */
+            /* justify-content: space-between; */ 
         }
         .sort-icon {
             font-size: 0.8em;
-            margin-left: 5px;
+            margin-left: 5px; /* Añade un pequeño margen para separar el icono del texto */
             color: rgba(255, 255, 255, 0.7);
         }
         @media (min-width: 768px) {
@@ -216,7 +219,7 @@
             </div>
             
             <div id="tableContainer" style="display: none;">
-                </div>
+            </div>
         </div>
     </div>
 
@@ -248,7 +251,8 @@
         };
 
         let currentTableData = { headers: [], rows: [] };
-        let currentSortOrder = ''; // '', 'asc', 'desc'
+        let currentStockSortOrder = ''; // '', 'asc', 'desc' for STOCK
+        let currentDateSortOrder = ''; // '', 'asc', 'desc' for FECHA_STOCK
 
         // Inicialización
         document.addEventListener('DOMContentLoaded', () => {
@@ -293,7 +297,9 @@
             elements.loadingIndicator.style.display = 'block';
             elements.tableContainer.style.display = 'none';
             elements.dataMessage.style.display = 'none';
-            currentSortOrder = ''; // Reset sort order on new fetch
+            
+            currentStockSortOrder = ''; // Reset sort order on new fetch
+            currentDateSortOrder = ''; // Reset sort order on new fetch
 
             try {
                 const response = await fetch(`${API_BASE_URL}/leer-sheet?id=${sheetId}`);
@@ -345,13 +351,24 @@
 
                 if (header === 'STOCK') {
                     th.classList.add('sortable-header');
+                    // Remove justify-content: space-between; from here or use a span inside for the icon
+                    // to prevent it from pushing the text to the left.
                     th.innerHTML = `
-                        ${header} 
+                        <span>${header}</span> 
                         <span class="sort-icon" id="stock-sort-icon">
-                            ${currentSortOrder === 'asc' ? '&#9650;' : (currentSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
+                            ${currentStockSortOrder === 'asc' ? '&#9650;' : (currentStockSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
                         </span>
                     `;
                     th.addEventListener('click', () => sortTableByStock(index));
+                } else if (header === 'FECHA_STOCK') { // New: Add sort for FECHA_STOCK
+                    th.classList.add('sortable-header');
+                    th.innerHTML = `
+                        <span>${header}</span> 
+                        <span class="sort-icon" id="date-sort-icon">
+                            ${currentDateSortOrder === 'asc' ? '&#9650;' : (currentDateSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
+                        </span>
+                    `;
+                    th.addEventListener('click', () => sortTableByDate(index));
                 }
                 
                 headerRow.appendChild(th);
@@ -390,27 +407,69 @@
         function sortTableByStock(stockColumnIndex) {
             const { headers, rows } = currentTableData;
 
+            // Reset other sort order
+            currentDateSortOrder = '';
+
             let newSortOrder = '';
-            if (currentSortOrder === '' || currentSortOrder === 'desc') {
+            if (currentStockSortOrder === '' || currentStockSortOrder === 'desc') {
                 newSortOrder = 'asc';
             } else {
                 newSortOrder = 'desc';
             }
-            currentSortOrder = newSortOrder;
+            currentStockSortOrder = newSortOrder;
 
             const sortedRows = [...rows].sort((a, b) => {
                 const stockA = parseInt(a[stockColumnIndex], 10);
                 const stockB = parseInt(b[stockColumnIndex], 10);
 
                 if (isNaN(stockA) || isNaN(stockB)) {
-                    // Handle non-numeric stock values (e.g., keep original order or put them at the end)
-                    return 0; 
+                    if (isNaN(stockA) && isNaN(stockB)) return 0;
+                    if (isNaN(stockA)) return newSortOrder === 'asc' ? 1 : -1;
+                    if (isNaN(stockB)) return newSortOrder === 'asc' ? -1 : 1;
                 }
 
                 if (newSortOrder === 'asc') {
                     return stockA - stockB;
                 } else {
                     return stockB - stockA;
+                }
+            });
+            
+            renderTable(headers, sortedRows);
+        }
+
+        // New: Sort table by FECHA_STOCK column
+        function sortTableByDate(dateColumnIndex) {
+            const { headers, rows } = currentTableData;
+
+            // Reset other sort order
+            currentStockSortOrder = '';
+
+            let newSortOrder = '';
+            if (currentDateSortOrder === '' || currentDateSortOrder === 'desc') {
+                newSortOrder = 'asc';
+            } else {
+                newSortOrder = 'desc';
+            }
+            currentDateSortOrder = newSortOrder;
+
+            const sortedRows = [...rows].sort((a, b) => {
+                // Assuming date format is YYYY-MM-DD HH:MM:SS.mmm as seen in the image (2025-07-31 09:08:27.999)
+                // New: Direct parsing to Date object should work for ISO-like format.
+                const dateA = new Date(a[dateColumnIndex]);
+                const dateB = new Date(b[dateColumnIndex]);
+                
+                // Handle invalid dates (e.g., put them at the end)
+                if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+                    if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+                    if (isNaN(dateA.getTime())) return newSortOrder === 'asc' ? 1 : -1;
+                    if (isNaN(dateB.getTime())) return newSortOrder === 'asc' ? -1 : 1;
+                }
+
+                if (newSortOrder === 'asc') {
+                    return dateA.getTime() - dateB.getTime();
+                } else {
+                    return dateB.getTime() - dateA.getTime();
                 }
             });
             
