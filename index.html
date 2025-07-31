@@ -119,16 +119,19 @@
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            table-layout: fixed; /* This is key for controlling column widths */
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            word-wrap: break-word; /* Allows long words to break and wrap */
         }
         th {
             background-color: #3498db;
             color: white;
-            padding: 12px 15px;
-            text-align: left;
             font-weight: 600;
         }
         td {
-            padding: 12px 15px;
             border-bottom: 1px solid #e9ecef;
             color: #495057;
         }
@@ -142,18 +145,37 @@
             color: #e74c3c;
             font-weight: 600;
         }
-        /* MODIFICACIÓN CLAVE AQUÍ */
+
+        /* Column specific width adjustments */
+        /* Apply specific widths to headers directly to control column sizing */
+        th:nth-child(1), td:nth-child(1) { /* MEDICAMENTO_NOMBRE */
+            width: 45%; /* Give it more space, but not overwhelming */
+        }
+        th:nth-child(2), td:nth-child(2) { /* PRESENTACION */
+            width: 20%;
+        }
+        th:nth-child(3), td:nth-child(3) { /* FECHA_STOCK */
+            width: 25%;
+            white-space: nowrap; /* Prevent date from wrapping if possible */
+            overflow: hidden; /* Hide overflow if it still happens */
+            text-overflow: ellipsis; /* Add ellipsis for clipped text */
+        }
+        th:nth-child(4), td:nth-child(4) { /* STOCK */
+            width: 10%;
+            text-align: center; /* Center stock values for better readability */
+        }
+
         .sortable-header {
             cursor: pointer;
             display: flex;
             align-items: center;
-            /* Elimina justify-content: space-between; si quieres que el icono esté pegado al texto
-               o ajusta el padding del th si la columna es muy estrecha */
-            /* justify-content: space-between; */ 
+            /* Adjust this if you want the icon to be strictly to the right,
+               but for smaller columns, keeping it close to the text is often better. */
+             justify-content: space-between; /* Keeps text and icon at opposite ends of the th */
         }
         .sort-icon {
             font-size: 0.8em;
-            margin-left: 5px; /* Añade un pequeño margen para separar el icono del texto */
+            margin-left: 5px; /* Add a small margin to separate the icon from the text */
             color: rgba(255, 255, 255, 0.7);
         }
         @media (min-width: 768px) {
@@ -180,10 +202,10 @@
             <h1>Sistema de Consulta de Medicamentos</h1>
             <p>Seleccione un establecimiento para ver su inventario</p>
         </div>
-        
+
         <div class="selection-section">
             <h2 class="section-title">Selección de Establecimiento</h2>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label for="oficina">Tipo de Establecimiento</label>
@@ -193,31 +215,31 @@
                         <option value="CS">FARMAMINSA</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="inputServicio">Establecimiento</label>
                     <input type="text" id="inputServicio" placeholder="Escriba para buscar..." list="listaServicios" autocomplete="off">
                     <datalist id="listaServicios"></datalist>
                 </div>
             </div>
-            
+
             <button id="fetchDataBtn" class="btn-primary">
                 Consultar Datos
             </button>
         </div>
-        
+
         <div id="results" class="results-section">
             <h2 class="section-title">Resultados de la Consulta</h2>
-            
+
             <div id="loadingIndicator" class="loading" style="display: none;">
                 <div class="spinner"></div>
                 <p>Cargando datos del inventario...</p>
             </div>
-            
+
             <div id="dataMessage" class="data-message">
                 Seleccione un establecimiento y haga clic en "Consultar Datos"
             </div>
-            
+
             <div id="tableContainer" style="display: none;">
             </div>
         </div>
@@ -238,7 +260,7 @@
         };
 
         const API_BASE_URL = 'https://api-consulta-sismed.googlesites.cloud';
-        
+
         // Elementos del DOM
         const elements = {
             oficina: document.getElementById('oficina'),
@@ -258,7 +280,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             // Cargar opciones de establecimientos
             elements.oficina.addEventListener('change', cargarServicios);
-            
+
             // Configurar botón de consulta
             elements.fetchDataBtn.addEventListener('click', fetchData);
         });
@@ -281,12 +303,12 @@
         // Consultar datos a la API
         async function fetchData() {
             const establecimiento = elements.inputServicio.value.trim();
-            
+
             if (!establecimiento) {
                 alert("Por favor seleccione un establecimiento válido");
                 return;
             }
-            
+
             const sheetId = establecimientoIds[establecimiento];
             if (!sheetId) {
                 alert("No se encontró configuración para este establecimiento");
@@ -297,23 +319,23 @@
             elements.loadingIndicator.style.display = 'block';
             elements.tableContainer.style.display = 'none';
             elements.dataMessage.style.display = 'none';
-            
+
             currentStockSortOrder = ''; // Reset sort order on new fetch
             currentDateSortOrder = ''; // Reset sort order on new fetch
 
             try {
                 const response = await fetch(`${API_BASE_URL}/leer-sheet?id=${sheetId}`);
-                
+
                 if (!response.ok) {
                     throw new Error(`Error ${response.status}: ${response.statusText}`);
                 }
-                
+
                 const data = await response.json();
-                
+
                 if (data.valores && data.valores.length > 1) {
                     const headers = data.valores[0];
                     const rows = data.valores.slice(1);
-                    
+
                     currentTableData = { headers, rows }; // Store data for sorting
                     renderTable(headers, rows);
                 } else {
@@ -332,72 +354,76 @@
         // Renderizar tabla con los datos
         function renderTable(headers, data) {
             elements.tableContainer.innerHTML = '';
-            
+
             if (data.length === 0) {
                 elements.dataMessage.textContent = 'No se encontraron registros de medicamentos';
                 elements.dataMessage.style.display = 'block';
                 return;
             }
-            
+
             const table = document.createElement('table');
-            
+
             // Crear encabezado
             const thead = document.createElement('thead');
             const headerRow = document.createElement('tr');
-            
+
             headers.forEach((header, index) => {
                 const th = document.createElement('th');
                 th.textContent = header;
 
+                // Determine column index for sorting. Assuming fixed order from the image.
+                const MEDICAMENTO_NOMBRE_INDEX = headers.indexOf('MEDICAMENTO_NOMBRE');
+                const PRESENTACION_INDEX = headers.indexOf('PRESENTACION');
+                const FECHA_STOCK_INDEX = headers.indexOf('FECHA_STOCK');
+                const STOCK_INDEX = headers.indexOf('STOCK');
+
                 if (header === 'STOCK') {
                     th.classList.add('sortable-header');
-                    // Remove justify-content: space-between; from here or use a span inside for the icon
-                    // to prevent it from pushing the text to the left.
                     th.innerHTML = `
-                        <span>${header}</span> 
+                        <span>${header}</span>
                         <span class="sort-icon" id="stock-sort-icon">
                             ${currentStockSortOrder === 'asc' ? '&#9650;' : (currentStockSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
                         </span>
                     `;
                     th.addEventListener('click', () => sortTableByStock(index));
-                } else if (header === 'FECHA_STOCK') { // New: Add sort for FECHA_STOCK
+                } else if (header === 'FECHA_STOCK') {
                     th.classList.add('sortable-header');
                     th.innerHTML = `
-                        <span>${header}</span> 
+                        <span>${header}</span>
                         <span class="sort-icon" id="date-sort-icon">
                             ${currentDateSortOrder === 'asc' ? '&#9650;' : (currentDateSortOrder === 'desc' ? '&#9660;' : '&#8597;')}
                         </span>
                     `;
                     th.addEventListener('click', () => sortTableByDate(index));
                 }
-                
+
                 headerRow.appendChild(th);
             });
-            
+
             thead.appendChild(headerRow);
             table.appendChild(thead);
-            
+
             // Crear cuerpo
             const tbody = document.createElement('tbody');
-            
+
             data.forEach(row => {
                 const tr = document.createElement('tr');
-                
-                row.forEach((cell, index) => {
+
+                headers.forEach((header, index) => { // Use headers to correctly identify columns
                     const td = document.createElement('td');
-                    td.textContent = cell;
-                    
+                    td.textContent = row[index] || ''; // Use row[index] as row is an array, provide fallback for empty cells
+
                     // Resaltar stock cero
-                    if (headers[index] === 'STOCK' && cell === '0') {
+                    if (header === 'STOCK' && row[index] === '0') {
                         td.className = 'stock-zero';
                     }
-                    
+
                     tr.appendChild(td);
                 });
-                
+
                 tbody.appendChild(tr);
             });
-            
+
             table.appendChild(tbody);
             elements.tableContainer.appendChild(table);
             elements.tableContainer.style.display = 'block';
@@ -434,7 +460,7 @@
                     return stockB - stockA;
                 }
             });
-            
+
             renderTable(headers, sortedRows);
         }
 
@@ -455,10 +481,9 @@
 
             const sortedRows = [...rows].sort((a, b) => {
                 // Assuming date format is YYYY-MM-DD HH:MM:SS.mmm as seen in the image (2025-07-31 09:08:27.999)
-                // New: Direct parsing to Date object should work for ISO-like format.
                 const dateA = new Date(a[dateColumnIndex]);
                 const dateB = new Date(b[dateColumnIndex]);
-                
+
                 // Handle invalid dates (e.g., put them at the end)
                 if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
                     if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
@@ -472,7 +497,7 @@
                     return dateB.getTime() - dateA.getTime();
                 }
             });
-            
+
             renderTable(headers, sortedRows);
         }
     </script>
