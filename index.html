@@ -1,488 +1,190 @@
+<!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Consulta de Medicamentos</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 30px auto;
-            padding: 20px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #3498db;
-        }
-        .header h1 {
-            font-size: 2.2rem;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-        .selection-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-        }
-        .section-title {
-            font-size: 1.2rem;
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            font-size: 0.95rem;
-            color: #495057;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-        select, input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ced4da;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-        select:focus, input:focus {
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-            outline: none;
-        }
-        .btn-primary {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 14px 25px;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 500;
-            cursor: pointer;
-            width: 100%;
-            transition: background 0.3s;
-        }
-        .btn-primary:hover {
-            background: #2980b9;
-        }
-        .results-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 25px;
-        }
-        .loading {
-            text-align: center;
-            padding: 30px;
-            color: #3498db;
-            font-size: 1.1rem;
-        }
-        .spinner {
-            border: 4px solid rgba(52, 152, 219, 0.2);
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .data-message {
-            text-align: center;
-            padding: 20px;
-            color: #6c757d;
-            font-size: 1.1rem;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-        }
-        th {
-            background-color: #3498db;
-            color: white;
-            padding: 12px 15px;
-            text-align: left;
-            font-weight: 600;
-        }
-        td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e9ecef;
-            color: #495057;
-        }
-        tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-        tr:hover {
-            background-color: #e9f7fe;
-        }
-        .stock-zero {
-            color: #e74c3c;
-            font-weight: 600;
-        }
-        .sortable-header {
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: start;
-        gap: 6px; /* Espacio entre el texto y el icono */
-        }
-
-        .sort-icon {
-            font-size: 0.8em;
-            margin-left: 5px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-        @media (min-width: 768px) {
-            .form-row {
-                display: flex;
-                gap: 20px;
-            }
-            .form-group {
-                flex: 1;
-                margin-bottom: 0;
-            }
-            .btn-primary {
-                width: auto;
-                max-width: 300px;
-                margin: 0 auto;
-                display: block;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Consulta SISMID</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    th, td {
+      word-wrap: break-word;
+      white-space: normal;
+    }
+  </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Sistema de Consulta de Medicamentosv2</h1>
-            <p>Seleccione un establecimiento para ver su inventario</p>
-        </div>
-        
-        <div class="selection-section">
-            <h2 class="section-title">Selección de Establecimiento</h2>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="oficina">Tipo de Establecimiento</label>
-                    <select id="oficina" onchange="cargarServicios()">
-                        <option value="">Seleccione un tipo</option>
-                        <option value="DIRIS">ESTABLECIMIENTOS DE SALUD</option>
-                        <option value="CS">FARMAMINSA</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="inputServicio">Establecimiento</label>
-                    <input type="text" id="inputServicio" placeholder="Escriba para buscar..." list="listaServicios" autocomplete="off">
-                    <datalist id="listaServicios"></datalist>
-                </div>
-            </div>
-            
-            <button id="fetchDataBtn" class="btn-primary">
-                Consultar Datos
-            </button>
-        </div>
-        
-        <div id="results" class="results-section">
-            <h2 class="section-title">Resultados de la Consulta</h2>
-            
-            <div id="loadingIndicator" class="loading" style="display: none;">
-                <div class="spinner"></div>
-                <p>Cargando datos del inventario...</p>
-            </div>
-            
-            <div id="dataMessage" class="data-message">
-                Seleccione un establecimiento y haga clic en "Consultar Datos"
-            </div>
-            
-            <div id="tableContainer" style="display: none;">
-                </div>
-        </div>
+<body class="bg-gray-50 text-sm text-gray-800 p-4">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-lg font-bold mb-4 text-center">Consulta Inventario SISMID</h1>
+
+    <div class="mb-4">
+      <label for="establecimientos" class="block font-medium mb-1">Establecimiento</label>
+      <input list="establecimientos" id="inputServicio" class="w-full border p-2 rounded" placeholder="Buscar establecimiento...">
+      <datalist id="establecimientos"></datalist>
     </div>
 
-    <script>
-        // Datos de establecimientos
-        const servicios = {
-            DIRIS: ["C.S CATALINA HUANCA", "C.S.M.C DAVID TEJADA"],
-            CS: ["FARMAMINSA-EL AGUSTINO", "FARMAMINSA-CHOSICA", "FARMAMINSA-ATE"]
-        };
+    <div class="mb-4">
+      <label for="oficina" class="block font-medium mb-1">Tipo de Establecimiento</label>
+      <select id="oficina" class="w-full border p-2 rounded">
+        <option value="1">Red</option>
+        <option value="2">Microred</option>
+        <option value="farma">FARMAMINSA ATE</option>
+      </select>
+    </div>
 
-        // Mapeo de establecimientos a IDs de hojas
-        const establecimientoIds = {
-            "FARMAMINSA-EL AGUSTINO": "1",
-            "FARMAMINSA-CHOSICA": "2",
-            "FARMAMINSA-ATE": "farma"
-        };
+    <button id="fetchDataBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Consultar</button>
 
-        const API_BASE_URL = 'https://api-consulta-sismed.googlesites.cloud';
-        
-        // Elementos del DOM
-        const elements = {
-            oficina: document.getElementById('oficina'),
-            inputServicio: document.getElementById('inputServicio'),
-            listaServicios: document.getElementById('listaServicios'),
-            fetchDataBtn: document.getElementById('fetchDataBtn'),
-            loadingIndicator: document.getElementById('loadingIndicator'),
-            tableContainer: document.getElementById('tableContainer'),
-            dataMessage: document.getElementById('dataMessage')
-        };
+    <div id="loading" class="mt-4 hidden">
+      <p class="text-blue-600">Cargando datos...</p>
+    </div>
 
-        let currentTableData = { headers: [], rows: [] };
-        let currentStockSortOrder = ''; // '', 'asc', 'desc' for STOCK
-        let currentDateSortOrder = ''; // '', 'asc', 'desc' for FECHA_STOCK
+    <div id="result" class="mt-6 overflow-x-auto"></div>
+  </div>
 
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', () => {
-            // Cargar opciones de establecimientos
-            elements.oficina.addEventListener('change', cargarServicios);
-            
-            // Configurar botón de consulta
-            elements.fetchDataBtn.addEventListener('click', fetchData);
+  <script>
+    const apiBase = "https://sismed-api.deta.dev";
+
+    const elements = {
+      inputServicio: document.getElementById("inputServicio"),
+      oficina: document.getElementById("oficina"),
+      fetchDataBtn: document.getElementById("fetchDataBtn"),
+      result: document.getElementById("result"),
+      loading: document.getElementById("loading"),
+      establecimientos: document.getElementById("establecimientos")
+    };
+
+    const renderTable = (data) => {
+      const table = document.createElement("table");
+      table.className = "min-w-full table-auto border border-gray-300 shadow text-xs";
+
+      const thead = document.createElement("thead");
+      thead.className = "bg-gray-200";
+
+      const tbody = document.createElement("tbody");
+
+      data.forEach((row, rowIndex) => {
+        const tr = document.createElement("tr");
+
+        row.forEach((cell, colIndex) => {
+          const cellElement = document.createElement(rowIndex === 0 ? "th" : "td");
+          cellElement.textContent = cell;
+
+          if (rowIndex === 0) {
+            cellElement.className = "px-2 py-2 border font-bold";
+            if (cell === "STOCK") {
+              cellElement.classList.add("cursor-pointer", "text-blue-700");
+              cellElement.onclick = () => sortTableByStock(data);
+            }
+            if (cell === "FECHA_STOCK") {
+              cellElement.classList.add("cursor-pointer", "text-blue-700");
+              cellElement.onclick = () => sortTableByDate(data);
+            }
+          } else {
+            cellElement.className = "px-2 py-2 border text-[11px] whitespace-normal break-words";
+          }
+
+          tr.appendChild(cellElement);
         });
 
-        // Cargar servicios según tipo seleccionado
-        function cargarServicios() {
-            const tipo = elements.oficina.value;
-            elements.inputServicio.value = "";
-            elements.listaServicios.innerHTML = "";
-
-            if (servicios[tipo]) {
-                servicios[tipo].forEach(establecimiento => {
-                    const option = document.createElement("option");
-                    option.value = establecimiento;
-                    elements.listaServicios.appendChild(option);
-                });
-            }
-        }
-
-        // Consultar datos a la API
-        async function fetchData() {
-            const establecimiento = elements.inputServicio.value.trim();
-            
-            if (!establecimiento) {
-                alert("Por favor seleccione un establecimiento válido");
-                return;
-            }
-            
-            const sheetId = establecimientoIds[establecimiento];
-            if (!sheetId) {
-                alert("No se encontró configuración para este establecimiento");
-                return;
-            }
-
-            // Mostrar carga
-            elements.loadingIndicator.style.display = 'block';
-            elements.tableContainer.style.display = 'none';
-            elements.dataMessage.style.display = 'none';
-            
-            currentStockSortOrder = ''; // Reset sort order on new fetch
-            currentDateSortOrder = ''; // Reset sort order on new fetch
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/leer-sheet?id=${sheetId}`);
-                
-                if (!response.ok) {
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                
-                if (data.valores && data.valores.length > 1) {
-                    const headers = data.valores[0];
-                    const rows = data.valores.slice(1);
-                    
-                    currentTableData = { headers, rows }; // Store data for sorting
-                    renderTable(headers, rows);
-                } else {
-                    elements.dataMessage.textContent = 'No se encontraron datos en la hoja seleccionada';
-                    elements.dataMessage.style.display = 'block';
-                }
-            } catch (error) {
-                console.error("Error al obtener datos:", error);
-                elements.dataMessage.textContent = `Error al cargar datos: ${error.message}`;
-                elements.dataMessage.style.display = 'block';
-            } finally {
-                elements.loadingIndicator.style.display = 'none';
-            }
-        }
-
-        // Renderizar tabla con los datos
-        function renderTable(headers, data) {
-    elements.tableContainer.innerHTML = '';
-
-    if (data.length === 0) {
-        elements.dataMessage.textContent = 'No se encontraron registros de medicamentos';
-        elements.dataMessage.style.display = 'block';
-        return;
-    }
-
-    const table = document.createElement('table');
-
-    // Crear encabezado
-    const thead = document.createElement('thead');
-    const headerRow = document.createElement('tr');
-
-    headers.forEach((header, index) => {
-        const th = document.createElement('th');
-
-        // Para columnas ordenables
-        if (header === 'STOCK' || header === 'FECHA_STOCK') {
-            const isStock = header === 'STOCK';
-            const currentOrder = isStock ? currentStockSortOrder : currentDateSortOrder;
-            const icon = currentOrder === 'asc' ? '▲' : (currentOrder === 'desc' ? '▼' : '⇅');
-
-            // Contenedor flex horizontal con ícono
-            th.innerHTML = `
-                <div class="inline-flex items-center gap-1 whitespace-nowrap cursor-pointer">
-                    ${header}
-                    <span class="text-sm opacity-70">${icon}</span>
-                </div>
-            `;
-
-            th.addEventListener('click', () => {
-                if (isStock) {
-                    sortTableByStock(index);
-                } else {
-                    sortTableByDate(index);
-                }
-            });
+        if (rowIndex === 0) {
+          thead.appendChild(tr);
         } else {
-            th.textContent = header;
+          tbody.appendChild(tr);
         }
+      });
 
-        headerRow.appendChild(th);
+      table.appendChild(thead);
+      table.appendChild(tbody);
+
+      elements.result.innerHTML = "";
+      elements.result.appendChild(table);
+    };
+
+    const sortTableByStock = (data) => {
+      const headers = data[0];
+      const stockIndex = headers.indexOf("STOCK");
+
+      const sorted = [...data.slice(1)].sort((a, b) => {
+        const aVal = parseFloat(a[stockIndex]) || 0;
+        const bVal = parseFloat(b[stockIndex]) || 0;
+        return bVal - aVal;
+      });
+
+      renderTable([headers, ...sorted]);
+    };
+
+    const sortTableByDate = (data) => {
+      const headers = data[0];
+      const dateIndex = headers.indexOf("FECHA_STOCK");
+
+      const sorted = [...data.slice(1)].sort((a, b) => {
+        const aDate = new Date(a[dateIndex]);
+        const bDate = new Date(b[dateIndex]);
+        return bDate - aDate;
+      });
+
+      renderTable([headers, ...sorted]);
+    };
+
+    const fetchData = async () => {
+      const establecimiento = elements.inputServicio.value.trim();
+      const oficina = elements.oficina.value;
+
+      if (!establecimiento) {
+        alert("Por favor seleccione un establecimiento válido.");
+        return;
+      }
+
+      elements.loading.classList.remove("hidden");
+      elements.result.innerHTML = "";
+
+      try {
+        const url = `${apiBase}/leer-sheet?id=${oficina}`;
+        const response = await fetch(url);
+        const json = await response.json();
+
+        if (json && json.valores && Array.isArray(json.valores)) {
+          const valoresFiltrados = json.valores.filter((row, i) => {
+            if (i === 0) return true; // encabezado
+            return row[0].toLowerCase().includes(establecimiento.toLowerCase());
+          });
+
+          if (valoresFiltrados.length > 1) {
+            renderTable(valoresFiltrados);
+          } else {
+            elements.result.innerHTML = "<p class='text-red-600'>No se encontraron resultados.</p>";
+          }
+        } else {
+          elements.result.innerHTML = "<p class='text-red-600'>Error al procesar datos.</p>";
+        }
+      } catch (err) {
+        console.error("Error al consultar API:", err);
+        elements.result.innerHTML = "<p class='text-red-600'>Error al consultar la API.</p>";
+      } finally {
+        elements.loading.classList.add("hidden");
+      }
+    };
+
+    const cargarEstablecimientos = async () => {
+      const oficina = elements.oficina.value;
+      try {
+        const url = `${apiBase}/leer-sheet?id=${oficina}`;
+        const response = await fetch(url);
+        const json = await response.json();
+
+        if (json && json.valores && Array.isArray(json.valores)) {
+          const nombres = Array.from(new Set(json.valores.slice(1).map(row => row[0])));
+          elements.establecimientos.innerHTML = nombres.map(nombre => `<option value="${nombre}">`).join("");
+        }
+      } catch (err) {
+        console.error("Error cargando establecimientos:", err);
+      }
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+      cargarEstablecimientos();
+      elements.oficina.addEventListener("change", cargarEstablecimientos);
+      elements.fetchDataBtn.addEventListener("click", fetchData);
     });
-
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    // Crear cuerpo
-    const tbody = document.createElement('tbody');
-
-    data.forEach(row => {
-        const tr = document.createElement('tr');
-
-        row.forEach((cell, index) => {
-            const td = document.createElement('td');
-            td.textContent = cell;
-
-            if (headers[index] === 'STOCK' && cell === '0') {
-                td.className = 'stock-zero';
-            }
-
-            tr.appendChild(td);
-        });
-
-        tbody.appendChild(tr);
-    });
-
-    table.appendChild(tbody);
-    elements.tableContainer.appendChild(table);
-    elements.tableContainer.style.display = 'block';
-}
-
-
-        // Sort table by STOCK column
-        function sortTableByStock(stockColumnIndex) {
-            const { headers, rows } = currentTableData;
-
-            // Reset other sort order
-            currentDateSortOrder = '';
-
-            let newSortOrder = '';
-            if (currentStockSortOrder === '' || currentStockSortOrder === 'desc') {
-                newSortOrder = 'asc';
-            } else {
-                newSortOrder = 'desc';
-            }
-            currentStockSortOrder = newSortOrder;
-
-            const sortedRows = [...rows].sort((a, b) => {
-                const stockA = parseInt(a[stockColumnIndex], 10);
-                const stockB = parseInt(b[stockColumnIndex], 10);
-
-                if (isNaN(stockA) || isNaN(stockB)) {
-                    // Handle non-numeric stock values gracefully (e.g., treat as 0 or keep original order)
-                    // For now, if one is NaN, it will be treated as less than a number in ascending sort.
-                    // If both are NaN, their original relative order is preserved.
-                    if (isNaN(stockA) && isNaN(stockB)) return 0;
-                    if (isNaN(stockA)) return newSortOrder === 'asc' ? 1 : -1; // NaN comes after numbers in asc
-                    if (isNaN(stockB)) return newSortOrder === 'asc' ? -1 : 1; // NaN comes before numbers in asc
-                }
-
-                if (newSortOrder === 'asc') {
-                    return stockA - stockB;
-                } else {
-                    return stockB - stockA;
-                }
-            });
-            
-            renderTable(headers, sortedRows);
-        }
-
-        // New: Sort table by FECHA_STOCK column
-        function sortTableByDate(dateColumnIndex) {
-            const { headers, rows } = currentTableData;
-
-            // Reset other sort order
-            currentStockSortOrder = '';
-
-            let newSortOrder = '';
-            if (currentDateSortOrder === '' || currentDateSortOrder === 'desc') {
-                newSortOrder = 'asc';
-            } else {
-                newSortOrder = 'desc';
-            }
-            currentDateSortOrder = newSortOrder;
-
-            const sortedRows = [...rows].sort((a, b) => {
-                // Assuming date format is DD/MM/YYYY
-                // Convert to YYYY-MM-DD for correct Date parsing
-                const datePartsA = a[dateColumnIndex].split('/');
-                const dateStringA = `${datePartsA[2]}-${datePartsA[1]}-${datePartsA[0]}`;
-                const dateA = new Date(dateStringA);
-
-                const datePartsB = b[dateColumnIndex].split('/');
-                const dateStringB = `${datePartsB[2]}-${datePartsB[1]}-${datePartsB[0]}`;
-                const dateB = new Date(dateStringB);
-                
-                // Handle invalid dates (e.g., put them at the end)
-                if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
-                    if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
-                    if (isNaN(dateA.getTime())) return newSortOrder === 'asc' ? 1 : -1; // Invalid date comes after valid in asc
-                    if (isNaN(dateB.getTime())) return newSortOrder === 'asc' ? -1 : 1; // Invalid date comes before valid in asc
-                }
-
-                if (newSortOrder === 'asc') {
-                    return dateA.getTime() - dateB.getTime();
-                } else {
-                    return dateB.getTime() - dateA.getTime();
-                }
-            });
-            
-            renderTable(headers, sortedRows);
-        }
-    </script>
+  </script>
 </body>
 </html>
